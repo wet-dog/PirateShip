@@ -42,11 +42,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="awesomeface.png">
-      <Filter>Source Files</Filter>
-    </Image>
     <Image Include="container.jpg">
-      <Filter>Source Files</Filter>
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="awesomeface.png">
+      <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
 </Project>
