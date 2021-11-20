@@ -26,7 +26,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\shader_s.h">
+    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\shader_m.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\stb\stb_image.h">
