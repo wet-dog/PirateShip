@@ -16,6 +16,7 @@
     <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\camera.h" />
     <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\shader_m.h" />
     <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\stb\stb_image.h" />
   </ItemGroup>
