@@ -21,12 +21,18 @@
     <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\stb\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="light_cube.frag" />
+    <None Include="light_cube.vert" />
+    <None Include="multiple_lights.frag" />
+    <None Include="multiple_lights.vert" />
     <None Include="shader.frag" />
     <None Include="shader.vert" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\awesomeface.png" />
     <Image Include="resources\textures\container.jpg" />
+    <Image Include="resources\textures\container2.png" />
+    <Image Include="resources\textures\container2_specular.png" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
