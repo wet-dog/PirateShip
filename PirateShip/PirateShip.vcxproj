@@ -17,10 +17,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\camera.h" />
+    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\mesh.h" />
+    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\model.h" />
     <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\shader_m.h" />
     <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\stb\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\resources\models\backpack.mtl" />
     <None Include="light_cube.frag" />
     <None Include="light_cube.vert" />
     <None Include="multiple_lights.frag" />
@@ -29,10 +32,23 @@
     <None Include="shader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="resources\textures\awesomeface.png" />
-    <Image Include="resources\textures\container.jpg" />
-    <Image Include="resources\textures\container2.png" />
-    <Image Include="resources\textures\container2_specular.png" />
+    <Image Include="..\resources\models\ao.jpg" />
+    <Image Include="..\resources\models\diffuse.jpg" />
+    <Image Include="..\resources\models\normal.png" />
+    <Image Include="..\resources\models\roughness.jpg" />
+    <Image Include="..\resources\models\specular.jpg" />
+    <Image Include="..\resources\textures\awesomeface.png" />
+    <Image Include="..\resources\textures\container.jpg" />
+    <Image Include="..\resources\textures\container2.png" />
+    <Image Include="..\resources\textures\container2_specular.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\resources\models\source_attribution.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="..\resources\models\backpack.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Object>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -85,7 +101,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\OpenGL\includes\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

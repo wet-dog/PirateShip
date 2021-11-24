@@ -35,6 +35,12 @@
     <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader.vert">
@@ -55,19 +61,47 @@
     <None Include="light_cube.frag">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="..\resources\models\backpack.mtl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="resources\textures\awesomeface.png">
+    <Image Include="..\resources\models\ao.jpg">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\textures\container.jpg">
+    <Image Include="..\resources\models\diffuse.jpg">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\textures\container2.png">
+    <Image Include="..\resources\models\normal.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="resources\textures\container2_specular.png">
+    <Image Include="..\resources\models\roughness.jpg">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="..\resources\models\specular.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\resources\textures\awesomeface.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\resources\textures\container.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\resources\textures\container2.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\resources\textures\container2_specular.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\resources\models\source_attribution.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="..\resources\models\backpack.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
   </ItemGroup>
 </Project>
