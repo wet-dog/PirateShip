@@ -67,6 +67,7 @@ int main() {
 
 	Shader lightingShader("multiple_lights.vert", "multiple_lights.frag");
 	Shader lightCubeShader("light_cube.vert", "light_cube.frag");
+	Shader cloudsShader("clouds.vert", "clouds.frag");
 
 	float vertices[] = {
 		// positions			 // normals					// texture coords
@@ -187,6 +188,58 @@ int main() {
 	glfwSetCursorPosCallback(window, mouse_callback);
 
 	Model ourModel("resources/models/backpack.obj");
+	Model ourPlane("resources/plane/plane.obj");
+	Model ourPlane2("resources/plane/plane.obj");
+	Model ourCube("resources/cube/cube.obj");
+	Model ourDome("resources/dome/dome.obj");
+	//Model ourPirateShip("resources/pirate_ship/pirateship.obj");
+	Model ourPirateShip("resources/pirate_ship/lowpoly.fbx");
+
+	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
+	unsigned int _FlowTex1 = loadTexture("resources/plane/Clouds_01_Flow.jpg");
+	//unsigned int _FlowTex1 = loadTexture("resources/plane/flowmap_thumb2.png");
+	unsigned int _CloudTex2 = loadTexture("resources/plane/Clouds_02.jpg");
+	unsigned int _WaveTex = loadTexture("resources/plane/Wave_Dist 1.jpg");
+	unsigned int _ColorTex = loadTexture("resources/plane/UpperColor.jpg");
+
+	cloudsShader.use();
+	cloudsShader.setInt("_CloudTex1", 0);
+	cloudsShader.setInt("_FlowTex1", 1);
+	cloudsShader.setInt("_CloudTex2", 2);
+	cloudsShader.setInt("_WaveTex", 3);
+	cloudsShader.setInt("_ColorTex", 4);
+
+	cloudsShader.setVec4("_Tiling1", glm::vec4(0.1, 0.1, 0, 1));
+	cloudsShader.setVec4("_Tiling2", glm::vec4(4, 4, 0, 0));
+	cloudsShader.setVec4("_TilingWave", glm::vec4(0.1, 0.1, 0, 5));
+	
+	cloudsShader.setFloat("_CloudScale", 1.0f);
+	cloudsShader.setFloat("_CloudBias", 0.0f);
+	
+	cloudsShader.setFloat("_Cloud2Amount", 1.0f);
+	cloudsShader.setFloat("_WaveAmount", 0.6f);
+	cloudsShader.setFloat("_WaveDistort", 0.05f);
+	cloudsShader.setFloat("_FlowSpeed", -3.0f);
+	cloudsShader.setFloat("_FlowAmount", 1.0f);
+
+	cloudsShader.setVec4("_TilingColor", glm::vec4(0.05f, 0.05f, 0.0f, 1.0f));
+
+	cloudsShader.setVec4("_Color", glm::vec4(0.9495942f, 0.4779412f, 1.0f, 1.0f));
+	cloudsShader.setVec4("_Color2", glm::vec4(0.3868124f, 0.3822448f, 0.5147059f, 1.0f));
+
+	cloudsShader.setFloat("_CloudDensity", 7.0f);
+
+	cloudsShader.setFloat("_BumpOffset", 1.0f);
+	cloudsShader.setFloat("_Steps", 70.0f);
+
+	cloudsShader.setFloat("_CloudHeight", 500.0f);
+	cloudsShader.setFloat("_Scale", 100000.0f);
+	cloudsShader.setFloat("_Speed", 0.01f);
+
+	cloudsShader.setVec4("_LightSpread", glm::vec4(5.0, 10.0, 40.0, 100.0));
+
+	cloudsShader.setFloat("_ColPow", 5.0f);
+	cloudsShader.setFloat("_ColFactor", 20.0f);
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
@@ -198,7 +251,7 @@ int main() {
 		processInput(window);
 
 		// rendering commands here
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
 		// draw objects
@@ -269,12 +322,27 @@ int main() {
 		lightingShader.setMat4("view", view);
 		lightingShader.setMat4("model", model);
 
+		// render the plane
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f)); // translate it down so it's at the center of the scene
+		model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));	// it's a bit too big for our scene, so scale it down
+		lightingShader.setMat4("model", model);
+		ourPlane2.Draw2(lightingShader);
 
 		// bind textures on corresponding texture units
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
+
+		// render the ship
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f)); // translate it down so it's at the center of the scene
+		//model = glm::scale(model, glm::vec3(1.0, 1.0, 1.0));	// it's a bit too big for our scene, so scale it down
+		model = glm::scale(model, glm::vec3(0.01, 0.01, 0.01));	// it's a bit too big for our scene, so scale it down
+
+		lightingShader.setMat4("model", model);
+		ourPirateShip.Draw(lightingShader);
 
 		// render boxes
 		//glBindVertexArray(cubeVAO);
@@ -291,11 +359,46 @@ int main() {
 		//}
 
 		//render the loaded model
+		//model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+		//lightingShader.setMat4("model", model);
+		//ourModel.Draw(lightingShader);
+
+		cloudsShader.use();
+		cloudsShader.setMat4("projection", projection);
+		cloudsShader.setMat4("view", view);
+		cloudsShader.setVec3("viewPos", camera.Position);
+
+		// render the plane
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-		lightingShader.setMat4("model", model);
-		ourModel.Draw(lightingShader);
+		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f)); // translate it down so it's at the center of the scene
+		model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));	// it's a bit too big for our scene, so scale it down
+		cloudsShader.setMat4("model", model);
+
+		glActiveTexture(GL_TEXTURE0);
+		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_CloudTex1"), 0);
+		glBindTexture(GL_TEXTURE_2D, _CloudTex1);
+
+		glActiveTexture(GL_TEXTURE1);
+		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_FlowTex1"), 1);
+		glBindTexture(GL_TEXTURE_2D, _FlowTex1);
+
+		glActiveTexture(GL_TEXTURE2);
+		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_CloudTex2"), 2);
+		glBindTexture(GL_TEXTURE_2D, _CloudTex2);
+
+		glActiveTexture(GL_TEXTURE3);
+		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_WaveTex"), 3);
+		glBindTexture(GL_TEXTURE_2D, _WaveTex);
+
+		glActiveTexture(GL_TEXTURE4);
+		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_ColorTex"), 4);
+		glBindTexture(GL_TEXTURE_2D, _ColorTex);
+
+		cloudsShader.setFloat("_Time", glfwGetTime());
+
+		ourPlane.Draw2(cloudsShader);
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();

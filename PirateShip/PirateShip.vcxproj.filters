@@ -64,6 +64,12 @@
     <None Include="..\resources\models\backpack.mtl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="clouds.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="clouds.frag">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\models\ao.jpg">

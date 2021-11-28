@@ -24,12 +24,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\resources\models\backpack.mtl" />
+    <None Include="clouds.frag" />
     <None Include="light_cube.frag" />
     <None Include="light_cube.vert" />
     <None Include="multiple_lights.frag" />
     <None Include="multiple_lights.vert" />
     <None Include="shader.frag" />
     <None Include="shader.vert" />
+    <None Include="clouds.vert" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\models\ao.jpg" />
