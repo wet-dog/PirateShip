@@ -4,6 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <vector>
 
 #include <PirateShip/shader_m.h>
 #include <PirateShip/camera.h>
@@ -29,6 +30,10 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
+
+CharacterEntity* entity;
+
+std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> models, CollisionPackage &collisionPackage);
 
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
@@ -191,9 +196,15 @@ int main() {
 	Model ourPlane("resources/plane/plane.obj");
 	Model ourPlane2("resources/plane/plane.obj");
 	Model ourCube("resources/cube/cube.obj");
+
+	//std::vector<std::vector<glm::vec3>> triangles = getTriangles(ourCube);
+
 	Model ourDome("resources/dome/dome.obj");
 	//Model ourPirateShip("resources/pirate_ship/pirateship.obj");
-	Model ourPirateShip("resources/pirate_ship/lowpoly.fbx");
+	//Model ourPirateShip("resources/pirate_ship/lowpoly.fbx");
+
+	//std::vector<Model> models = { ourPlane2, ourCube };
+	std::vector<Model> models = { ourPlane2 };
 
 	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
 	unsigned int _FlowTex1 = loadTexture("resources/plane/Clouds_01_Flow.jpg");
@@ -240,6 +251,19 @@ int main() {
 
 	cloudsShader.setFloat("_ColPow", 5.0f);
 	cloudsShader.setFloat("_ColFactor", 20.0f);
+	
+	
+	// size of collision ellipse, experiment with this to change fidelity of detection
+	static glm::vec3 boundingEllipse = { 0.5f, 1.0f, 0.5f };
+	entity = new CharacterEntity();
+
+	// initialize player infront of model
+	entity->position[1] = 0.0f;
+	entity->position[2] = 1.0f;
+
+	camera.setEntity(entity);
+
+	entity->triangles = getTriangles(models, *entity->collisionPackage);
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
@@ -249,6 +273,10 @@ int main() {
 		lastFrame = currentFrame;
 
 		processInput(window);
+
+		entity->update();
+		camera.Position = entity->position;
+		entity->velocity = entity->velocity * 0.1f;
 
 		// rendering commands here
 		glClearColor(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
@@ -329,6 +357,28 @@ int main() {
 		lightingShader.setMat4("model", model);
 		ourPlane2.Draw2(lightingShader);
 
+		entity->triangles = getTriangles(models, *entity->collisionPackage);
+
+		for (int i = 0; i < entity->triangles.size(); i++) {
+			std::vector<glm::vec3> triangle = entity->triangles[i];
+			glm::vec4 first = glm::vec4(triangle[0], 1);
+			glm::vec4 second = glm::vec4(triangle[1], 1);
+			glm::vec4 third = glm::vec4(triangle[2], 1);
+			first = model * first;
+			second = model * second;
+			third = model * third;
+			triangle = { glm::vec3(first), glm::vec3(second), glm::vec3(third) };
+			entity->triangles[i] = triangle;
+		}
+
+		// render the plane
+		// TESTING: COLLISION
+		//model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+		//lightingShader.setMat4("model", model);
+		//ourPlane2.Draw2(lightingShader);
+
 		// bind textures on corresponding texture units
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
@@ -342,7 +392,7 @@ int main() {
 		model = glm::scale(model, glm::vec3(0.01, 0.01, 0.01));	// it's a bit too big for our scene, so scale it down
 
 		lightingShader.setMat4("model", model);
-		ourPirateShip.Draw(lightingShader);
+		//ourPirateShip.Draw(lightingShader);
 
 		// render boxes
 		//glBindVertexArray(cubeVAO);
@@ -374,6 +424,7 @@ int main() {
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f)); // translate it down so it's at the center of the scene
 		model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));	// it's a bit too big for our scene, so scale it down
+
 		cloudsShader.setMat4("model", model);
 
 		glActiveTexture(GL_TEXTURE0);
@@ -506,4 +557,28 @@ unsigned int loadTexture(char const* path)
 	}
 
 	return textureID;
+}
+
+std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> models, CollisionPackage &collisionPackage) {
+	std::vector<std::vector<glm::vec3>> triangles;
+
+	for (Model model : models) {
+		for (Mesh mesh : model.meshes) {
+			for (int i = 0; i < mesh.indices.size(); i += 3) {
+				int index1 = mesh.indices[i];
+				int index2 = mesh.indices[i + 1];
+				int index3 = mesh.indices[i + 2];
+
+				glm::vec3 first = mesh.vertices[index1].Position / collisionPackage.eRadius;
+				glm::vec3 second = mesh.vertices[index2].Position / collisionPackage.eRadius;
+				glm::vec3 third = mesh.vertices[index3].Position / collisionPackage.eRadius;
+
+				std::vector<glm::vec3> triangle = { first, second, third };
+			
+				triangles.push_back(triangle);
+			}
+		}
+	}
+
+	return triangles;
 }

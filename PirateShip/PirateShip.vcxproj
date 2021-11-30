@@ -16,13 +16,6 @@
     <ClCompile Include="stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\camera.h" />
-    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\mesh.h" />
-    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\model.h" />
-    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\PirateShip\shader_m.h" />
-    <ClInclude Include="..\..\..\..\..\..\OpenGL\includes\stb\stb_image.h" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\resources\models\backpack.mtl" />
     <None Include="clouds.frag" />
     <None Include="light_cube.frag" />
@@ -51,6 +44,16 @@
     <Object Include="..\resources\models\backpack.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="includes\PirateShip\camera.h" />
+    <ClInclude Include="includes\PirateShip\collision_package.h" />
+    <ClInclude Include="includes\PirateShip\entity.h" />
+    <ClInclude Include="includes\PirateShip\math.h" />
+    <ClInclude Include="includes\PirateShip\mesh.h" />
+    <ClInclude Include="includes\PirateShip\model.h" />
+    <ClInclude Include="includes\PirateShip\plane.h" />
+    <ClInclude Include="includes\PirateShip\shader_m.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -104,7 +107,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\OpenGL\includes\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\humin\source\repos\PirateShip\PirateShip\includes;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

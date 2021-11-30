@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/PirateShip/includes/assimp
+/PirateShip/includes/glad
+/PirateShip/includes/GLFW
+/PirateShip/includes/glm
+/PirateShip/includes/KHR
+/PirateShip/includes/stb
