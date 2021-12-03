@@ -88,8 +88,8 @@ void main()
 
 	// Generate uvs from the world position of the sky
 	vec3 worldPos = viewPos + traceDir * ( ( _CloudHeight - viewPos.y ) / max( traceDir.y, 0.00001) );
-//	vec3 uv = vec3( worldPos.xz * 0.01 * _Scale, 0 );
-	vec3 uv = _Scale * vec3(fs_in.TexCoords, 0);
+	vec3 uv = vec3( worldPos.xz * 0.01 * _Scale, 0 );
+//	vec3 uv = _Scale * vec3(fs_in.TexCoords, 0);
 
 	// Make a spot for the sun, make it brighter at the horizon
 //	float lightDot = clamp( dot( dirLight.direction, viewDir ) * 0.5 + 0.5, 0.0, 1.0);
@@ -103,7 +103,7 @@ void main()
 	// initialize the accumulated color with fog
 //	vec4 accColor = FogColorDensitySky(viewDir);
 	vec4 accColor = vec4(0.0f, 0.0f, 0.0f, 0.5f);
-	vec4 clouds = vec4(0, 0, 0, 0);
+	vec4 clouds = vec4(0);
 	for( int j = 0; j < _Steps; j++ ){
 		// if we filled the alpha then break out of the loop
 		if( accColor.w >= 1.0 ) { break; }
@@ -126,23 +126,20 @@ void main()
 	accColor += clouds * ( 1.0 - accColor.w );
 	
 	// return the color!
-
-//	accColor.w = 1;
-
 	// Fog parameters, could make them uniforms and pass them into the fragment shader
-	float fog_maxdist = 8.0;
-	float fog_mindist = 0.1;
-	float fog_density = 0.1f;
+	float fog_density = 0.02f;
 	vec4  fog_colour = vec4(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
 
 	// Calculate fog
-	float dist = length(viewPos - fs_in.FragPos);
+	float dist = length(viewPos.xz - fs_in.FragPos.xz);
 //	float fog_factor = (fog_maxdist - dist) /
 //					  (fog_maxdist - fog_mindist);
-	float fog_factor = exp(-pow(fog_density * dist, 1.0));
+	float fog_factor = exp(-pow(fog_density * dist, 2.0));
 	fog_factor = 1.0 - clamp(fog_factor, 0.0, 1.0);
 
 	FragColor = mix(accColor, fog_colour, fog_factor);
+
+//	FragColor = vec4(accColor);
 }
 
 float rand3(vec3 co) {

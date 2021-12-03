@@ -89,8 +89,9 @@ public:
 		// to the exact spot.
 		if (collisionPackage->nearestDistance >= veryCloseDistance)
 		{
-			glm::vec3 V = glm::min(length(vel), (float)collisionPackage->nearestDistance - veryCloseDistance) * vel;
-			newBasePoint = collisionPackage->basePoint + V;
+			glm::vec3 V = glm::normalize(vel) * ((float)collisionPackage->nearestDistance - veryCloseDistance);
+			// Commented out:
+			//newBasePoint = collisionPackage->basePoint + V;
 			// Adjust polygon intersection point (so sliding
 			// plane will be unaffected by the fact that we
 			// move slightly less than collision tells us)
