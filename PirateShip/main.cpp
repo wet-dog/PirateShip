@@ -19,6 +19,16 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void create_refraction_map(Model& refractiveObject, Shader& refractiveShader, glm::vec3 translate, glm::vec3 scale);
+void render_glass(
+	Model& refractiveObject,
+	Shader& refractiveShader,
+	unsigned int& maskBuffer,
+	unsigned int& diffuseMap,
+	unsigned int& normalMap,
+	glm::vec3 translate, 
+	glm::vec3 scale
+);
 unsigned int loadTexture(const char* path);
 
 // settings
@@ -73,6 +83,8 @@ int main() {
 	Shader lightingShader("multiple_lights.vert", "multiple_lights.frag");
 	Shader lightCubeShader("light_cube.vert", "light_cube.frag");
 	Shader cloudsShader("clouds.vert", "clouds.frag");
+	Shader refractiveShader("refractive.vert", "refractive.frag");
+	Shader refractiveMaskShader("refractive_mask.vert", "refractive_mask.frag");
 
 	float vertices[] = {
 		// positions			 // normals					// texture coords
@@ -139,6 +151,35 @@ int main() {
 		glm::vec3(0.0f,  0.0f, -3.0f)
 	};
 
+
+	// Screen shader
+	float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+	// positions   // texCoords
+	-1.0f,  1.0f,  0.0f, 1.0f,
+	-1.0f, -1.0f,  0.0f, 0.0f,
+	 1.0f, -1.0f,  1.0f, 0.0f,
+
+	-1.0f,  1.0f,  0.0f, 1.0f,
+	 1.0f, -1.0f,  1.0f, 0.0f,
+	 1.0f,  1.0f,  1.0f, 1.0f
+	};
+	
+	Shader screenShader("5.1.framebuffers_screen.vs", "5.1.framebuffers_screen.fs");
+	screenShader.use();
+	screenShader.setInt("screenTexture", 0);
+
+	// screen quad VAO
+	unsigned int quadVAO, quadVBO;
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
 	// cube's VAO
 	unsigned int VBO, cubeVAO;
 	glGenVertexArrays(1, &cubeVAO);
@@ -204,6 +245,8 @@ int main() {
 	Model ourPirateShip("resources/pirate_ship/lowpoly.fbx");
 	//Model ourHitBox("resources/hitbox/hitbox.fbx");
 	Model ourHitBox("resources/hitbox/hitbox.obj");
+	Model ourBottle("resources/bottle/ship_in_a_bottle_modified4.obj");
+	Model ourSupport("resources/support/support.obj");
 
 	//std::vector<Model> models = { ourPlane2, ourCube };
 	//std::vector<Model> models = { ourPlane2 };
@@ -254,7 +297,16 @@ int main() {
 
 	cloudsShader.setFloat("_ColPow", 5.0f);
 	cloudsShader.setFloat("_ColFactor", 20.0f);
-	
+
+	// Glass shader
+	unsigned int _normalMap = loadTexture("resources/bottle/bottleexport_baked_material_normal.jpeg");
+	unsigned int _diffuseMap = loadTexture("resources/bottle/bottleexport_baked_material_diffuse.jpg");
+
+	refractiveShader.use();
+	refractiveShader.setInt("diffuseMap", 0);
+	refractiveShader.setInt("normalMap", 1);
+	refractiveShader.setInt("refractionMap", 2);
+	refractiveShader.setInt("environmentMap", 3);
 	
 	// size of collision ellipse, experiment with this to change fidelity of detection
 	//static glm::vec3 boundingEllipse = { 0.5f, 1.0f, 0.5f };
@@ -269,9 +321,60 @@ int main() {
 
 	entity->triangles = getTriangles(models, *entity->collisionPackage);
 
+	glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
+
+	// framebuffer configuration
+	// -------------------------
+	unsigned int framebuffer;
+	glGenFramebuffers(1, &framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+	// create a color attachment texture
+	unsigned int maskBuffer;
+	glGenTextures(1, &maskBuffer);
+	glBindTexture(GL_TEXTURE_2D, maskBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, maskBuffer, 0);
+	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+	unsigned int rbo;
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
+
+	// create a color attachment texture
+	unsigned int colorTexture;
+	glGenTextures(1, &colorTexture);
+	glBindTexture(GL_TEXTURE_2D, colorTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+	//unsigned int rbo2;
+	//glGenRenderbuffers(1, &rbo2);
+	//glBindRenderbuffer(GL_RENDERBUFFER, rbo2);
+	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
+	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo2); // now actually attach it
+	//// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	//	cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
+
 	// render loop
 	while (!glfwWindowShouldClose(window))
 	{
+
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		glEnable(GL_DEPTH_TEST);
+
+		// Swap back to refractionMask framebuffer texture
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, maskBuffer, 0);
+
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
@@ -280,7 +383,7 @@ int main() {
 
 		entity->update();
 		camera.Position = entity->position;
-		entity->velocity = entity->velocity * 0.1f;
+		entity->velocity = entity->velocity * .3f;
 
 		// rendering commands here
 		glClearColor(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
@@ -408,7 +511,7 @@ int main() {
 		model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f)); // translate it down so it's at the center of the scene
 		model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));	// it's a bit too big for our scene, so scale it down
 		lightingShader.setMat4("model", model);
-		ourPlane2.Draw2(lightingShader);
+		//ourPlane2.Draw2(lightingShader);
 
 		// render the hitbox
 		model = glm::mat4(1.0f);
@@ -471,26 +574,18 @@ int main() {
 		lightingShader.setMat4("model", model);
 		ourPirateShip.Draw(lightingShader);
 
-		// render boxes
-		//glBindVertexArray(cubeVAO);
-		//for (unsigned int i = 0; i < 10; i++)
-		//{
-		//	// calculate the model matrix for each object and pass it to shader before drawing
-		//	glm::mat4 model = glm::mat4(1.0f);
-		//	model = glm::translate(model, cubePositions[i]);
-		//	float angle = 20.0f * (i + 1) * glfwGetTime();
-		//	model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-		//	lightingShader.setMat4("model", model);
+		// Bottle scale and translation
+		glm::vec3 bottle_translate = glm::vec3(0.0f, 25.5f, 0.0f);
+		glm::vec3 bottle_scale = glm::vec3(15.0f, 15.0f, 15.0f);
 
-		//	glDrawArrays(GL_TRIANGLES, 0, 36);
-		//}
+		// render the support
+		model = glm::mat4(1.0f);
+		// bottle_scale.y * 2.1f, bottle_scale.z * .3f
+		model = glm::translate(model, glm::vec3(0.0f, -3.95f, 5.0f));
+		model = glm::scale(model, bottle_scale);
 
-		//render the loaded model
-		//model = glm::mat4(1.0f);
-		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-		//lightingShader.setMat4("model", model);
-		//ourModel.Draw(lightingShader);
+		lightingShader.setMat4("model", model);
+		ourSupport.Draw(lightingShader);
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();
@@ -507,6 +602,32 @@ int main() {
 			lightCubeShader.setMat4("model", model);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
+
+		create_refraction_map(ourBottle, refractiveMaskShader, bottle_translate, bottle_scale);
+
+		// Swap framebuffer textures
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
+		
+		// Clear the buffer for drawing the bottle
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		render_glass(ourBottle, refractiveShader, maskBuffer, _diffuseMap, _normalMap, bottle_translate, bottle_scale);
+
+		// now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+		// clear all relevant buffers
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		screenShader.use();
+		glBindVertexArray(quadVAO);
+		glBindTexture(GL_TEXTURE_2D, maskBuffer);	// use the color attachment texture as the texture of the quad plane
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		glBindTexture(GL_TEXTURE_2D, colorTexture);	// use the color attachment texture as the texture of the quad plane
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		glfwSwapBuffers(window);
@@ -622,4 +743,87 @@ std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> models, Coll
 	}
 
 	return triangles;
+}
+
+void create_refraction_map(Model& refractiveObject, Shader& refractiveShader, glm::vec3 translate, glm::vec3 scale) {
+	// Write to the alpha channel
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+
+	// Disable writing to depth buffer
+	glDepthMask(GL_FALSE);
+
+	// Set up shader
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 view = camera.GetViewMatrix();
+	
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, translate);
+	model = glm::scale(model, scale);
+
+	refractiveShader.use();
+	refractiveShader.setMat4("projection", projection);
+	refractiveShader.setMat4("view", view);
+	refractiveShader.setMat4("model", model);
+
+	// Draw refractive object
+	refractiveObject.Draw2(refractiveShader);
+
+	// Reset alpha values of framebuffer
+	//glClearColor(0, 0, 0, 1);
+
+	// Reset frame buffer write mode
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+	// Reset writing to depth buffer
+	glDepthMask(GL_TRUE);
+}
+
+void render_glass(
+	Model& refractiveObject, 
+	Shader& refractiveShader, 
+	unsigned int& maskBuffer,
+	unsigned int& diffuseMap,
+	unsigned int& normalMap,
+	glm::vec3 translate, 
+	glm::vec3 scale
+) {
+	// Render refractive geometry
+	refractiveShader.use();
+
+	// Set up shader
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 view = camera.GetViewMatrix();
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, translate);
+	model = glm::scale(model, scale);
+
+	refractiveShader.use();
+	refractiveShader.setMat4("projection", projection);
+	refractiveShader.setMat4("view", view);
+	refractiveShader.setMat4("model", model);
+
+	refractiveShader.setVec3("vCameraPos", camera.Position);
+
+	// Set background texture
+	// What's behind the object
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(glGetUniformLocation(refractiveShader.ID, "refractionMap"), 0);
+	glBindTexture(GL_TEXTURE_2D, maskBuffer);
+
+	// What's around the object
+	// Environment map
+
+	// Set diffuse map
+	glActiveTexture(GL_TEXTURE1);
+	glUniform1i(glGetUniformLocation(refractiveShader.ID, "diffuseMap"), 1);
+	glBindTexture(GL_TEXTURE_2D, diffuseMap);
+
+	// Set normal map
+	glActiveTexture(GL_TEXTURE2);
+	glUniform1i(glGetUniformLocation(refractiveShader.ID, "normalMap"), 2);
+	glBindTexture(GL_TEXTURE_2D, normalMap);
+
+	// Draw refractive object
+	refractiveObject.Draw2(refractiveShader);
 }

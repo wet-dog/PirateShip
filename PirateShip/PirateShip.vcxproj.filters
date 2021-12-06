@@ -18,10 +18,10 @@
     <ClCompile Include="..\..\..\..\Downloads\glad\src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="stb_image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="stb_image.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -51,6 +51,30 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="clouds.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="refractive_mask.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="refractive_mask.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="refractive.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="refractive.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="5.1.framebuffers.vs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="5.1.framebuffers.fs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="5.1.framebuffers_screen.vs">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="5.1.framebuffers_screen.fs">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

@@ -17,11 +17,19 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\resources\models\backpack.mtl" />
+    <None Include="5.1.framebuffers.fs" />
+    <None Include="5.1.framebuffers.vs" />
+    <None Include="5.1.framebuffers_screen.fs" />
+    <None Include="5.1.framebuffers_screen.vs" />
     <None Include="clouds.frag" />
     <None Include="light_cube.frag" />
     <None Include="light_cube.vert" />
     <None Include="multiple_lights.frag" />
     <None Include="multiple_lights.vert" />
+    <None Include="refractive.frag" />
+    <None Include="refractive.vert" />
+    <None Include="refractive_mask.frag" />
+    <None Include="refractive_mask.vert" />
     <None Include="shader.frag" />
     <None Include="shader.vert" />
     <None Include="clouds.vert" />
