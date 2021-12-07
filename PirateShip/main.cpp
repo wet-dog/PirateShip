@@ -26,6 +26,7 @@ void render_glass(
 	unsigned int& maskBuffer,
 	unsigned int& diffuseMap,
 	unsigned int& normalMap,
+	unsigned int& specularMap,
 	glm::vec3 translate, 
 	glm::vec3 scale
 );
@@ -56,6 +57,7 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	//glfwWindowHint(GLFW_SAMPLES, 4);
 	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	// glfw window creation
@@ -76,6 +78,7 @@ int main() {
 		return -1;
 	}
 
+	//glEnable(GL_MULTISAMPLE);
 	// z-buffer
 	glEnable(GL_DEPTH_TEST);
 
@@ -257,7 +260,7 @@ int main() {
 	//unsigned int _FlowTex1 = loadTexture("resources/plane/flowmap_thumb2.png");
 	unsigned int _CloudTex2 = loadTexture("resources/plane/Clouds_02.jpg");
 	unsigned int _WaveTex = loadTexture("resources/plane/Wave_Dist 1.jpg");
-	unsigned int _ColorTex = loadTexture("resources/plane/UpperColor.jpg");
+	unsigned int _ColorTex = loadTexture("resources/plane/UpperColorDesaturate4.jpg");
 
 	cloudsShader.use();
 	cloudsShader.setInt("_CloudTex1", 0);
@@ -301,12 +304,14 @@ int main() {
 	// Glass shader
 	unsigned int _normalMap = loadTexture("resources/bottle/bottleexport_baked_material_normal.jpeg");
 	unsigned int _diffuseMap = loadTexture("resources/bottle/bottleexport_baked_material_diffuse.jpg");
+	unsigned int _specularMap = loadTexture("resources/bottle/bottleexport_baked_material_SPEC.png");
 
 	refractiveShader.use();
 	refractiveShader.setInt("diffuseMap", 0);
 	refractiveShader.setInt("normalMap", 1);
 	refractiveShader.setInt("refractionMap", 2);
 	refractiveShader.setInt("environmentMap", 3);
+	refractiveShader.setInt("specularMap", 4);
 	
 	// size of collision ellipse, experiment with this to change fidelity of detection
 	//static glm::vec3 boundingEllipse = { 0.5f, 1.0f, 0.5f };
@@ -390,7 +395,7 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
 
 		// use camera class to get projection and view matrices
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 
 		// world transformation
@@ -447,7 +452,8 @@ int main() {
 		// directional light
 		lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
 		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-		lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+		//lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+		lightingShader.setVec3("dirLight.diffuse", 0.5f, 0.6f, 0.5f);
 		lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
 		// point light 1
@@ -482,17 +488,6 @@ int main() {
 		lightingShader.setFloat("pointLights[3].constant", 1.0f);
 		lightingShader.setFloat("pointLights[3].linear", 0.09);
 		lightingShader.setFloat("pointLights[3].quadratic", 0.032);
-		// spotLight
-		//lightingShader.setVec3("spotLight.position", camera.Position);
-		//lightingShader.setVec3("spotLight.direction", camera.Front);
-		//lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-		//lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-		//lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-		//lightingShader.setFloat("spotLight.constant", 1.0f);
-		//lightingShader.setFloat("spotLight.linear", 0.09);
-		//lightingShader.setFloat("spotLight.quadratic", 0.032);
-		//lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-		//lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
@@ -557,20 +552,6 @@ int main() {
 		//model = glm::scale(model, glm::vec3(1.0, 1.0, 1.0));	// it's a bit too big for our scene, so scale it down
 		model = glm::scale(model, glm::vec3(0.02, 0.02, 0.02));	// it's a bit too big for our scene, so scale it down
 
-		//entity->triangles = getTriangles(models, *entity->collisionPackage);
-
-		//for (int i = 0; i < entity->triangles.size(); i++) {
-		//	std::vector<glm::vec3> triangle = entity->triangles[i];
-		//	glm::vec4 first = glm::vec4(triangle[0], 1);
-		//	glm::vec4 second = glm::vec4(triangle[1], 1);
-		//	glm::vec4 third = glm::vec4(triangle[2], 1);
-		//	first = model * first;
-		//	second = model * second;
-		//	third = model * third;
-		//	triangle = { glm::vec3(first), glm::vec3(second), glm::vec3(third) };
-		//	entity->triangles[i] = triangle;
-		//}
-
 		lightingShader.setMat4("model", model);
 		ourPirateShip.Draw(lightingShader);
 
@@ -612,7 +593,7 @@ int main() {
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		render_glass(ourBottle, refractiveShader, maskBuffer, _diffuseMap, _normalMap, bottle_translate, bottle_scale);
+		render_glass(ourBottle, refractiveShader, maskBuffer, _diffuseMap, _normalMap, _specularMap, bottle_translate, bottle_scale);
 
 		// now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -701,14 +682,25 @@ unsigned int loadTexture(char const* path)
 		else if (nrComponents == 4)
 			format = GL_RGBA;
 
+		
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
+
+		//glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, textureID);
+		//// 4 samples
+		//glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, width, height, GL_TRUE);
+		//glGenerateMipmap(GL_TEXTURE_2D_MULTISAMPLE);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		stbi_image_free(data);
 	}
@@ -753,7 +745,7 @@ void create_refraction_map(Model& refractiveObject, Shader& refractiveShader, gl
 	glDepthMask(GL_FALSE);
 
 	// Set up shader
-	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 	glm::mat4 view = camera.GetViewMatrix();
 	
 	glm::mat4 model = glm::mat4(1.0f);
@@ -784,6 +776,7 @@ void render_glass(
 	unsigned int& maskBuffer,
 	unsigned int& diffuseMap,
 	unsigned int& normalMap,
+	unsigned int& specularMap,
 	glm::vec3 translate, 
 	glm::vec3 scale
 ) {
@@ -791,7 +784,7 @@ void render_glass(
 	refractiveShader.use();
 
 	// Set up shader
-	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 	glm::mat4 view = camera.GetViewMatrix();
 
 	glm::mat4 model = glm::mat4(1.0f);
@@ -823,6 +816,15 @@ void render_glass(
 	glActiveTexture(GL_TEXTURE2);
 	glUniform1i(glGetUniformLocation(refractiveShader.ID, "normalMap"), 2);
 	glBindTexture(GL_TEXTURE_2D, normalMap);
+
+	// Set specular map
+	glActiveTexture(GL_TEXTURE3);
+	glUniform1i(glGetUniformLocation(refractiveShader.ID, "specularMap"), 3);
+	glBindTexture(GL_TEXTURE_2D, specularMap);
+
+	// directional light
+	refractiveShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+	refractiveShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
 	// Draw refractive object
 	refractiveObject.Draw2(refractiveShader);

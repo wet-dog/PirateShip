@@ -102,7 +102,8 @@ void main()
 
 	// initialize the accumulated color with fog
 //	vec4 accColor = FogColorDensitySky(viewDir);
-	vec4 accColor = vec4(0.0f, 0.0f, 0.0f, 0.5f);
+//	vec4 accColor = vec4(0.0f, 0.0f, 0.0f, 0.5f);
+	vec4 accColor = vec4(0.0f, 0.0f, 0.0f, 0.75f);
 	vec4 clouds = vec4(0);
 	for( int j = 0; j < _Steps; j++ ){
 		// if we filled the alpha then break out of the loop
@@ -128,10 +129,12 @@ void main()
 	// return the color!
 	// Fog parameters, could make them uniforms and pass them into the fragment shader
 	float fog_density = 0.02f;
-	vec4  fog_colour = vec4(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
+//	vec4  fog_colour = vec4(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
+	vec4  fog_colour = vec4(17.0f/255.0f, 17.0f/ 255.0f, 77.0f/ 255.0f, 1.0f);
 
 	// Calculate fog
-	float dist = length(viewPos.xz - fs_in.FragPos.xz);
+//	float dist = length(viewPos.xz - fs_in.FragPos.xz);
+	float dist = length(.9f * fs_in.FragPos.xz);
 //	float fog_factor = (fog_maxdist - dist) /
 //					  (fog_maxdist - fog_mindist);
 	float fog_factor = exp(-pow(fog_density * dist, 2.0));

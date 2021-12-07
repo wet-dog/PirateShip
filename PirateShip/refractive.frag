@@ -8,12 +8,27 @@ in VS_OUT {
     float R;
 } fs_in;
 
+struct DirLight {
+    vec3 direction;
+	
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
+
+in vec3 aNormal;
+in vec3 CameraPos;
+in vec3 FragPos;
+uniform DirLight dirLight;
+
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 uniform sampler2D refractionMap;
 uniform sampler2D environmentMap;
+uniform sampler2D specularMap;
 
 float fresnel(vec3 light, vec3 normal, float R0);
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);
 
 void main() {
     vec3 vEye = normalize(fs_in.Eye.xyz);
@@ -48,13 +63,12 @@ void main() {
 
     // Final output blends reflection and refraction using Fresnel term
 //    FragColor = vDiffuse * vFinal * (1 - fresnel) + vEnvMap * fresnel;
-//    FragColor = vDiffuse * vFinal * (1 - fresnel);
     
-//    FragColor = texture(diffuseMap, fs_in.BaseUV.xy);
-//    FragColor = texture(refractionMap, fs_in.BaseUV.xy);
-//    FragColor = vRefrA;
-//    FragColor = vDiffuse * vec4(vFinal.xyz, 1);
-    FragColor = mix(vDiffuse * vec4(vFinal.xyz, 1), vec4(1,1,1,1), fs_in.R);
+    vec3 norm = normalize(aNormal);
+    vec3 viewDir = normalize(CameraPos - FragPos);
+    vec3 result = CalcDirLight(dirLight, norm, viewDir);
+
+    FragColor = mix(vDiffuse * vec4(vFinal.xyz, 1), vec4(1,1,1,1), fs_in.R) + vec4(result, 1);
 
 //    FragColor = vec4(vFinal.xyz, 1);
 //    FragColor = vec4(vFinal.a, vFinal.a, vFinal.a, 1);
@@ -72,4 +86,18 @@ float fresnel(vec3 light, vec3 normal, float R0)
     result = clamp(result * (1 - clamp(R0, 0.0, 1.0)) +  R0, 0.0, 1.0);
  
     return result;
+}
+
+// calculates the color when using a directional light.
+vec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir)
+{
+    float shininess = 50.0f;
+    vec3 lightDir = normalize(-light.direction);
+    // diffuse shading
+    float diff = max(dot(normal, lightDir), 0.0);
+    // specular shading
+    vec3 reflectDir = reflect(-lightDir, normal);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3 specular = light.specular * spec * vec3(texture(specularMap, fs_in.BaseUV));
+    return specular;
 }

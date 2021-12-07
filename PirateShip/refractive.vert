@@ -18,6 +18,10 @@ out VS_OUT {
     float R;
 } vs_out;
 
+out vec3 FragPos;
+out vec3 aNormal;
+out vec3 CameraPos;
+
 mat3 GetTangentSpaceBasis(vec3 T, vec3 N)
 {
    mat3 objToTangentSpace;
@@ -30,6 +34,10 @@ mat3 GetTangentSpaceBasis(vec3 T, vec3 N)
 }
 
 void main() {
+    FragPos = vec3(model * vec4(Pos, 1.0));
+    aNormal = mat3(transpose(inverse(model))) * Normal;
+    CameraPos = vCameraPos;
+
     mat4 MVP = projection * view * model;
     
     vec4 vPos = vec4(Pos, 1) + vTranslation;

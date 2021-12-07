@@ -130,8 +130,8 @@ public:
 	void update()
 	{
 		this->grounded = false;
-		glm::vec3 gravity = { 0.0f, -0.01f, 0.0f };
-		//glm::vec3 gravity = { 0.0f, 0.0f, 0.0f };
+		//glm::vec3 gravity = { 0.0f, -0.01f, 0.0f };
+		glm::vec3 gravity = { 0.0f, 0.0f, 0.0f };
 
 		collideAndSlide(gravity, velocity);
 	}
