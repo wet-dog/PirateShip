@@ -9,6 +9,9 @@
 #include <PirateShip/shader_m.h>
 #include <PirateShip/camera.h>
 #include <PirateShip/model.h>
+#include <PirateShip/texture.h>
+#include <PirateShip/water_shader.h>
+#include <PirateShip/clouds_shader.h>
 
 #include <stb/stb_image.h>
 
@@ -34,17 +37,7 @@ void render_glass(
 	glm::vec3 scale
 );
 
-void setWaterShader(Shader& waterShader);
-void bindWaterTextures(
-	Shader& waterShader,
-	unsigned int _CloudTex1,
-	unsigned int _FlowTex1,
-	unsigned int _CloudTex2,
-	unsigned int _WaveTex,
-	unsigned int _ColorTex
-);
-
-std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> models, CollisionPackage &collisionPackage);
+std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> hitboxes, CollisionPackage &collisionPackage);
 
 
 const unsigned int SCR_WIDTH = 1920;
@@ -99,7 +92,10 @@ int main() {
 	Shader waterShader("shaders/water.vert", "shaders/water.frag");
 	Shader refractiveShader("shaders/refractive.vert", "shaders/refractive.frag");
 	Shader refractiveMaskShader("shaders/refractive_mask.vert", "shaders/refractive_mask.frag");
-	Shader screenShader("shaders/framebuffers_screen.vert", "shaders/framebuffers_screen.frag");
+	Shader screenShader("shaders/framebuffers.vert", "shaders/framebuffers.frag");
+
+	CloudsShader cloudsSettings = CloudsShader();
+	WaterShader waterSettings = WaterShader();
 
 	glm::vec3 pointLightPositions[] = {
 		glm::vec3(16.9275f, 23.8319f, 43.2494f),
@@ -137,6 +133,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	
 	// Load and generate the texture
 	int width, height, nrChannels;
 
@@ -156,7 +153,7 @@ int main() {
 	Model ourBottle("resources/bottle/bottle.obj");
 	Model ourSupport("resources/support/support.obj");
 
-	std::vector<Model> models = { ourHitBox };
+	std::vector<Model> hitboxes = { ourHitBox };
 
 	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
 	unsigned int _CloudTex2 = loadTexture("resources/plane/Clouds_02.jpg");
@@ -166,44 +163,7 @@ int main() {
 	unsigned int _ColorWaveTex = loadTexture("resources/plane/Waves_Color.jpg");
 	unsigned int _WaveTex2 = loadTexture("resources/plane/Waves.png");
 
-	cloudsShader.use();
-	cloudsShader.setInt("_CloudTex1", 0);
-	cloudsShader.setInt("_FlowTex1", 1);
-	cloudsShader.setInt("_CloudTex2", 2);
-	cloudsShader.setInt("_WaveTex", 3);
-	cloudsShader.setInt("_ColorTex", 4);
-
-	cloudsShader.setVec4("_Tiling1", glm::vec4(0.1, 0.1, 0, 1));
-	cloudsShader.setVec4("_Tiling2", glm::vec4(4, 4, 0, 0));
-	cloudsShader.setVec4("_TilingWave", glm::vec4(0.1, 0.1, 0, 5));
-	
-	cloudsShader.setFloat("_CloudScale", 1.0f);
-	cloudsShader.setFloat("_CloudBias", 0.0f);
-	
-	cloudsShader.setFloat("_Cloud2Amount", 2.0f);
-	cloudsShader.setFloat("_WaveAmount", 0.6f);
-	cloudsShader.setFloat("_WaveDistort", 0.05f);
-	cloudsShader.setFloat("_FlowSpeed", -3.0f);
-	cloudsShader.setFloat("_FlowAmount", 1.0f);
-
-	cloudsShader.setVec4("_TilingColor", glm::vec4(0.05f, 0.05f, 0.0f, 1.0f));
-
-	cloudsShader.setVec4("_Color", glm::vec4(0.9495942f, 0.4779412f, 1.0f, 1.0f));
-	cloudsShader.setVec4("_Color2", glm::vec4(0.3868124f, 0.3822448f, 0.5147059f, 1.0f));
-
-	cloudsShader.setFloat("_CloudDensity", 7.0f);
-
-	cloudsShader.setFloat("_BumpOffset", 1.0f);
-	cloudsShader.setFloat("_Steps", 70.0f);
-
-	cloudsShader.setFloat("_CloudHeight", 500.0f);
-	cloudsShader.setFloat("_Scale", 0.5f);
-	cloudsShader.setFloat("_Speed", 0.01f);
-
-	cloudsShader.setVec4("_LightSpread", glm::vec4(5.0, 10.0, 40.0, 100.0));
-
-	cloudsShader.setFloat("_ColPow", 5.0f);
-	cloudsShader.setFloat("_ColFactor", 20.0f);
+	cloudsSettings.setCloudsShader(cloudsShader);
 
 	// Glass shader set up
 	unsigned int _diffuseMap = loadTexture("resources/bottle/bottle_DIFF.jpg");
@@ -225,17 +185,16 @@ int main() {
 
 	camera.setEntity(entity);
 
-	entity->triangles = getTriangles(models, *entity->collisionPackage);
+	entity->triangles = getTriangles(hitboxes, *entity->collisionPackage);
 
 	glEnable(GL_BLEND);
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
 
 	// framebuffer configuration
 	unsigned int framebuffer;
 	glGenFramebuffers(1, &framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-	// create a color attachment texture
+	// create a color attachment texture for the mask
 	unsigned int maskBuffer;
 	glGenTextures(1, &maskBuffer);
 	glBindTexture(GL_TEXTURE_2D, maskBuffer);
@@ -243,7 +202,7 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, maskBuffer, 0);
-	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+	// create a renderbuffer object for depth and stencil attachment
 	unsigned int rbo;
 	glGenRenderbuffers(1, &rbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
@@ -261,14 +220,11 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	setWaterShader(waterShader);
+	waterSettings.setWaterShader(waterShader);
 
 	// render loop
 	while (!glfwWindowShouldClose(window))
 	{
-
-		std::cout << entity->position.x << " " << entity->position.y << " " << entity->position.z << "\n";
-
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 		glEnable(GL_DEPTH_TEST);
 
@@ -300,6 +256,7 @@ int main() {
 		cloudsShader.setMat4("projection", projection);
 		cloudsShader.setMat4("view", view);
 		cloudsShader.setVec3("viewPos", camera.Position);
+		cloudsShader.setFloat("_Time", glfwGetTime());
 
 		glDepthMask(GL_FALSE);
 
@@ -307,7 +264,6 @@ int main() {
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, -125.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));
-
 		cloudsShader.setMat4("model", model);
 
 		glActiveTexture(GL_TEXTURE0);
@@ -329,6 +285,9 @@ int main() {
 		glActiveTexture(GL_TEXTURE4);
 		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_ColorTex"), 4);
 		glBindTexture(GL_TEXTURE_2D, _ColorTex);
+
+		//cloudsSettings.setCloudsShader(cloudsShader);
+		//cloudsSettings.bindCloudsTextures(cloudsShader);
 
 		cloudsShader.setFloat("_Time", glfwGetTime());
 
@@ -383,7 +342,7 @@ int main() {
 
 		// pass transformation matrices to the shader
 		model = glm::mat4(1.0f);
-		lightingShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+		lightingShader.setMat4("projection", projection);
 		lightingShader.setMat4("view", view);
 		lightingShader.setMat4("model", model);
 
@@ -400,13 +359,10 @@ int main() {
 
 		waterShader.setFloat("_Time", glfwGetTime());
 
-		waterShader.setFloat("_Scale", 10000.0f);
+		waterSettings.setWaterShader(waterShader);
+		waterSettings.bindWaterTextures(waterShader);
 
-		waterShader.setVec4("_Color", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-		waterShader.setVec4("_Color2", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-		
-		bindWaterTextures(waterShader, _CloudTex1, _FlowTex1, _WaveTex2, _WaveTex, _ColorWaveTex);
-
+		// Draw water
 		ourPlane.Draw2(waterShader);
 
 		lightingShader.use();
@@ -419,7 +375,7 @@ int main() {
 		lightingShader.setMat4("model", model);
 		//ourHitBox.Draw(lightingShader);
 
-		entity->triangles = getTriangles(models, *entity->collisionPackage);
+		entity->triangles = getTriangles(hitboxes, *entity->collisionPackage);
 
 		for (int i = 0; i < entity->triangles.size(); i++) {
 			std::vector<glm::vec3> triangle = entity->triangles[i];
@@ -447,7 +403,6 @@ int main() {
 
 		// render the support
 		model = glm::mat4(1.0f);
-		// bottle_scale.y * 2.1f, bottle_scale.z * .3f
 		model = glm::translate(model, glm::vec3(0.0f, -3.95f, 5.0f));
 		model = glm::scale(model, bottle_scale);
 
@@ -542,52 +497,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 }
 
 
-// Utility function for loading a 2D texture from file
-unsigned int loadTexture(char const* path)
-{
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
-
-	int width, height, nrComponents;
-	unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
-	if (data)
-	{
-		GLenum format;
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3)
-			format = GL_RGB;
-		else if (nrComponents == 4)
-			format = GL_RGBA;
-
-		
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		stbi_image_free(data);
-	}
-	else
-	{
-		std::cout << "Texture failed to load at path: " << path << std::endl;
-		stbi_image_free(data);
-	}
-
-	return textureID;
-}
-
-
-// Convert all the triangles in a mesh into ellipsoid space and put them in an array for collision
-std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> models, CollisionPackage &collisionPackage) {
+// Convert all the triangles of a hitbox into ellipsoid space and put them in an array for collision
+std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> hitboxes, CollisionPackage &collisionPackage) {
 	std::vector<std::vector<glm::vec3>> triangles;
 
-	for (Model model : models) {
-		for (Mesh mesh : model.meshes) {
+	for (Model hitbox : hitboxes) {
+		for (Mesh mesh : hitbox.meshes) {
 			for (int i = 0; i < mesh.indices.size();) {
 				// Get indices of a triangle's vertices
 				int a = mesh.indices[i++];
@@ -698,74 +613,4 @@ void render_glass(
 
 	// Draw refractive object
 	refractiveObject.Draw2(refractiveShader);
-}
-
-
-void setWaterShader(Shader& waterShader) {
-	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
-	unsigned int _FlowTex1 = loadTexture("resources/plane/Clouds_01_Flow.jpg");
-	unsigned int _CloudTex2 = loadTexture("resources/plane/Clouds_02.jpg");
-	unsigned int _WaveTex = loadTexture("resources/plane/Wave_Dist_1.jpg");
-	unsigned int _ColorWaveTex = loadTexture("resources/plane/Waves_Color.jpg");
-
-	waterShader.use();
-	waterShader.setInt("_CloudTex1", 0);
-	waterShader.setInt("_FlowTex1", 1);
-	waterShader.setInt("_CloudTex2", 2);
-	waterShader.setInt("_WaveTex", 3);
-	waterShader.setInt("_ColorTex", 4);
-
-	waterShader.setVec4("_Tiling1", glm::vec4(0.1, 0.1, 0, 1));
-	waterShader.setVec4("_Tiling2", glm::vec4(4, 4, 0, 0));
-	waterShader.setVec4("_TilingWave", glm::vec4(0.1, 0.1, 0, 5));
-
-	waterShader.setFloat("_CloudScale", 1.0f);
-	waterShader.setFloat("_CloudBias", 0.0f);
-
-	waterShader.setFloat("_Cloud2Amount", 2.0f);
-	waterShader.setFloat("_WaveAmount", 0.6f);
-	waterShader.setFloat("_WaveDistort", 0.05f);
-	waterShader.setFloat("_FlowSpeed", -3.0f);
-	waterShader.setFloat("_FlowAmount", 1.0f);
-
-	waterShader.setVec4("_TilingColor", glm::vec4(0.05f, 0.05f, 0.0f, 1.0f));
-
-	waterShader.setVec4("_Color", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-
-	waterShader.setFloat("_CloudDensity", 7.0f);
-
-	waterShader.setFloat("_BumpOffset", 1.0f);
-	waterShader.setFloat("_Steps", 70.0f);
-
-	waterShader.setFloat("_CloudHeight", 500.0f);
-	waterShader.setFloat("_Scale", 0.01f);
-	waterShader.setFloat("_Speed", 0.01f);
-
-	waterShader.setVec4("_LightSpread", glm::vec4(5.0, 10.0, 40.0, 100.0));
-
-	waterShader.setFloat("_ColPow", 5.0f);
-	waterShader.setFloat("_ColFactor", 20.0f);
-}
-
-
-void bindWaterTextures(Shader& waterShader, unsigned int _CloudTex1, unsigned int _FlowTex1, unsigned int _CloudTex2, unsigned int _WaveTex, unsigned int _ColorTex) {
-	glActiveTexture(GL_TEXTURE0);
-	glUniform1i(glGetUniformLocation(waterShader.ID, "_CloudTex1"), 0);
-	glBindTexture(GL_TEXTURE_2D, _CloudTex1);
-
-	glActiveTexture(GL_TEXTURE1);
-	glUniform1i(glGetUniformLocation(waterShader.ID, "_FlowTex1"), 1);
-	glBindTexture(GL_TEXTURE_2D, _FlowTex1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glUniform1i(glGetUniformLocation(waterShader.ID, "_CloudTex2"), 2);
-	glBindTexture(GL_TEXTURE_2D, _CloudTex2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glUniform1i(glGetUniformLocation(waterShader.ID, "_WaveTex"), 3);
-	glBindTexture(GL_TEXTURE_2D, _WaveTex);
-
-	glActiveTexture(GL_TEXTURE4);
-	glUniform1i(glGetUniformLocation(waterShader.ID, "_ColorTex"), 4);
-	glBindTexture(GL_TEXTURE_2D, _ColorTex);
 }

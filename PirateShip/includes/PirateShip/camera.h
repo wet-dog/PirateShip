@@ -75,6 +75,7 @@ public:
     void ProcessKeyboard(Camera_Movement direction, float deltaTime)
     {   
         float prev_y_vel = entity->velocity.y;
+        
         float velocity = MovementSpeed * deltaTime;
         if (direction == FORWARD)
             entity->velocity += Front * velocity;
@@ -85,6 +86,7 @@ public:
         if (direction == RIGHT)
             entity->velocity += Right * velocity;
 
+        // Lock y-velocity to be level so the player can't fly upwards
         //entity->velocity.y = prev_y_vel;
     }
 

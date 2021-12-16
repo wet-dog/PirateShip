@@ -45,16 +45,13 @@ void main() {
           
     // perspective corrected projection      
     vec4 vHPos = MVP * vPos;         	
-    		  
 	vHPos.y = -vHPos.y;
     vs_out.ScreenPos.xy = (vHPos.xy + vHPos.w)*0.5;    
     vs_out.ScreenPos.zw = vec2(1, vHPos.w);      
         
     // get tangent space basis    
     mat3 objToTangentSpace = GetTangentSpaceBasis(Tangent.xyz, Normal.xyz);
-            
     vec3 EyeVec = vCameraPos.xyz - vPos.xyz;
-    
     vs_out.Eye.xyz = objToTangentSpace * EyeVec;
 
     // Fresnel R value
@@ -67,6 +64,5 @@ void main() {
     float _Power = 0.05;
 	vs_out.R = _Bias + _Scale * pow(1.0 + dot(I, normWorld), _Power);
 
-//    gl_Position = vec4(vs_out.Eye.xyz, 0);
     gl_Position = MVP * vec4(Pos, 1);
 }

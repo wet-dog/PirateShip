@@ -9,7 +9,8 @@
 
 class CollisionPackage {
 public:
-	glm::vec3 eRadius; // ellipsoid radius
+	// Ellipsoid radius
+	glm::vec3 eRadius; 
 	// Information about the move being requested: (in R3)
 	glm::vec3 R3Velocity;
 	glm::vec3 R3Position;
@@ -22,7 +23,7 @@ public:
 	double nearestDistance;
 	glm::vec3 intersectionPoint;
 
-	// iteration depth
+	// Iteration depth
 	int collisionRecursionDepth;
 };
 #endif

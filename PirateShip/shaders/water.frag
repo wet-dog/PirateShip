@@ -4,16 +4,21 @@ out vec4 FragColor;
 in VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
-    vec3 TangentLightPos;
-    vec3 TangentViewPos;
-    vec3 TangentFragPos;
 } fs_in;
 
-uniform sampler2D diffuseMap;
-uniform sampler2D normalMap;
+struct DirLight {
+    vec3 direction;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
 
-/* ADDED */
-uniform sampler2D _CloudTex1;
+vec4 SampleClouds(vec3 uv, vec3 sunTrans, float densityAdd);
+float rand3(vec3 co);
+vec4 newfunc();
+vec4 FogColorDensitySky(vec3 worldPos);
+float CalcFogFalloff( vec3 viewDir );
+
 uniform sampler2D _FlowTex1;
 uniform sampler2D _CloudTex2;
 uniform sampler2D _WaveTex;
@@ -34,44 +39,14 @@ uniform float _FlowAmount;
 uniform sampler2D _ColorTex;
 uniform vec4 _TilingColor;
 
-uniform vec4 _Color;
-uniform vec4 _Color2;
-
 uniform float _CloudDensity;
 
-uniform float _BumpOffset;
-uniform float _Steps;
-
-uniform float _CloudHeight;
 uniform float _Scale;
 uniform float _Speed;
 
-uniform float _ColPow;
-uniform float _ColFactor;
-
-// Me adding specifically
 uniform float _Time;
 
-struct DirLight {
-    vec3 direction;
-	
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-
 uniform DirLight dirLight;
-
-/* ADDED */
-
-uniform vec3 lightPos;
-uniform vec3 viewPos;
-
-vec4 SampleClouds(vec3 uv, vec3 sunTrans, float densityAdd);
-float rand3(vec3 co);
-vec4 newfunc();
-vec4 FogColorDensitySky(vec3 worldPos);
-float CalcFogFalloff( vec3 viewDir );
 
 void main()
 {
@@ -79,10 +54,8 @@ void main()
 
 	vec4 clouds = SampleClouds(uv, vec3(0.5, 0.5, 0.5), 1.0 );
 	
-	// return the color!
 	// Fog parameters, could make them uniforms and pass them into the fragment shader
 	float fog_density = 0.02f;
-//	vec4  fog_colour = vec4(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
 	vec4  fog_colour = vec4(17.0f/255.0f, 17.0f/ 255.0f, 77.0f/ 255.0f, 1.0f);
 
 	// Calculate fog
@@ -131,17 +104,6 @@ vec4 SampleClouds (vec3 uv, vec3 sunTrans, float densityAdd) {
 	// and the values cound go outside 0-1 range
 	clouds.w = clouds.w * _CloudScale + _CloudBias;
 
-//	return clouds;
-
-	// overhead light color
-//	vec3 coords4 = vec3( uv.xy * _TilingColor.xy + ( _TilingColor.zw * _Speed * _Time ), 0.0 );
-//	vec4 cloudColor = texture( _ColorTex, coords4.xy );
-//
-	// cloud color based on density
-//	float cloudHightMask = clamp(clouds.w, 0.0, 1.0);;
-//	cloudHightMask = pow( cloudHightMask, _ColPow );
-//	clouds.xyz *= mix( _Color2.xyz, _Color.xyz * cloudColor.xyz * _ColFactor, cloudHightMask );
-
 	// subtract alpha based on height
 	float cloudSub = 1.0 - uv.z;
 	clouds.w = clouds.w - cloudSub * cloudSub;
@@ -151,9 +113,6 @@ vec4 SampleClouds (vec3 uv, vec3 sunTrans, float densityAdd) {
 
 	// add extra density
 	clouds.w = clamp(clouds.w + densityAdd, 0.0, 1.0);
-
-	// add Sunlight
-//	clouds.xyz += sunTrans * cloudHightMask;
 
 	// premultiply alpha
 	clouds.xyz *= clouds.w;

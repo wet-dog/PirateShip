@@ -29,9 +29,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\resources\models\backpack.mtl">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="shaders\clouds.frag">
       <Filter>Shader Files</Filter>
     </None>
@@ -42,12 +39,6 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="shaders\framebuffers.vert">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="shaders\framebuffers_screen.frag">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="shaders\framebuffers_screen.vert">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="shaders\light_cube.frag">
@@ -74,57 +65,12 @@
     <None Include="shaders\refractive_mask.vert">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\shader.frag">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="shaders\shader.vert">
-      <Filter>Shader Files</Filter>
-    </None>
     <None Include="shaders\water.frag">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="shaders\water.vert">
       <Filter>Shader Files</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\resources\models\ao.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\resources\models\diffuse.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\resources\models\normal.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\resources\models\roughness.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\resources\models\specular.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\resources\textures\awesomeface.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\resources\textures\container.jpg">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\resources\textures\container2.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\resources\textures\container2_specular.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\resources\models\source_attribution.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="..\resources\models\backpack.obj">
-      <Filter>Resource Files</Filter>
-    </Object>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes\PirateShip\camera.h">
@@ -149,6 +95,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="includes\PirateShip\shader_m.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\PirateShip\texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\PirateShip\water_shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\PirateShip\clouds_shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
