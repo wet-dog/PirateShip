@@ -21,7 +21,8 @@ enum Camera_Movement {
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
 const float SPEED = 5.0f;
-const float SENSITIVITY = 0.1f;
+//const float SENSITIVITY = 0.1f;
+const float SENSITIVITY = 0.05f;
 const float ZOOM = 45.0f;
 
 
@@ -72,7 +73,8 @@ public:
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
     void ProcessKeyboard(Camera_Movement direction, float deltaTime)
-    {
+    {   
+        float prev_y_vel = entity->velocity.y;
         float velocity = MovementSpeed * deltaTime;
         if (direction == FORWARD)
             entity->velocity += Front * velocity;
@@ -82,6 +84,8 @@ public:
             entity->velocity -= Right * velocity;
         if (direction == RIGHT)
             entity->velocity += Right * velocity;
+
+        //entity->velocity.y = prev_y_vel;
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.

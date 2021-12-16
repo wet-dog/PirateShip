@@ -80,7 +80,7 @@ void main()
     // result += CalcSpotLight(spotLight, norm, FragPos, viewDir);    
 
 	// Fog parameters, could make them uniforms and pass them into the fragment shader
-	float fog_density = 0.02f;
+	float fog_density = 0.01f;
 //	vec4  fog_colour = vec4(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
     vec4  fog_colour = vec4(17.0f/255.0f, 17.0f/ 255.0f, 77.0f/ 255.0f, 1.0f);
 

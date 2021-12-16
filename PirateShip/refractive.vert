@@ -54,7 +54,6 @@ void main() {
     mat3 objToTangentSpace = GetTangentSpaceBasis(Tangent.xyz, Normal.xyz);
             
     vec3 EyeVec = vCameraPos.xyz - vPos.xyz;
-    vec3 LightVec = vCameraPos.xyz - vPos.xyz;
     
     vs_out.Eye.xyz = objToTangentSpace * EyeVec;
 

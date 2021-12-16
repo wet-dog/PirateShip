@@ -28,7 +28,7 @@ public:
 		position = glm::vec3(0, 0, 0);
 		velocity = glm::vec3(0, 0, 0);
 		collisionRecursionDepth = 0;
-		collisionPackage->eRadius = glm::vec3(0.5f, 1.0f, 0.5f);
+		collisionPackage->eRadius = glm::vec3(0.5f, 1.05f, 0.5f);
 	}
 
 	void collideAndSlide(const glm::vec3& vel, const glm::vec3& gravity)
@@ -41,6 +41,7 @@ public:
 		glm::vec3 eSpaceVelocity = collisionPackage->R3Velocity / collisionPackage->eRadius;
 		// Iterate until we have our final position.
 		collisionRecursionDepth = 0;
+		//glm::vec3 finalPosition = collideWithWorld(eSpacePosition, eSpaceVelocity);
 		glm::vec3 finalPosition = collideWithWorld(eSpacePosition, eSpaceVelocity);
 		// Add gravity pull:
 		// To remove gravity uncomment from here .....
@@ -49,6 +50,7 @@ public:
 		collisionPackage->R3Velocity = gravity;
 		eSpaceVelocity = gravity / collisionPackage->eRadius;
 		collisionRecursionDepth = 0;
+		//finalPosition = collideWithWorld(finalPosition, eSpaceVelocity);
 		finalPosition = collideWithWorld(finalPosition, eSpaceVelocity);
 		// ... to here
 		// Convert final result back to R3:
@@ -127,11 +129,17 @@ public:
 	}
 
 
-	void update()
+	void update(bool useGravity)
 	{
 		this->grounded = false;
-		//glm::vec3 gravity = { 0.0f, -0.01f, 0.0f };
-		glm::vec3 gravity = { 0.0f, 0.0f, 0.0f };
+		glm::vec3 gravity;
+		if (useGravity) {
+			gravity = { 0.0f, -0.01f, 0.0f };
+		}
+		else {
+			gravity = { 0.0f, 0.0f, 0.0f };
+		}
+		gravity = { 0.0f, 0.0f, 0.0f };
 
 		collideAndSlide(gravity, velocity);
 	}

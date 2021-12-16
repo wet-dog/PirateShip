@@ -30,11 +30,13 @@ void render_glass(
 	glm::vec3 translate, 
 	glm::vec3 scale
 );
+void setWaterShader(Shader& waterShader);
+void bindWaterTextures(Shader& waterShader, unsigned int _CloudTex1, unsigned int _FlowTex1, unsigned int _CloudTex2, unsigned int _WaveTex, unsigned int _ColorTex);
 unsigned int loadTexture(const char* path);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -50,6 +52,8 @@ float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
+bool gravity = true;
 
 int main() {
 	// glfw: initialize and configure
@@ -88,6 +92,7 @@ int main() {
 	Shader cloudsShader("clouds.vert", "clouds.frag");
 	Shader refractiveShader("refractive.vert", "refractive.frag");
 	Shader refractiveMaskShader("refractive_mask.vert", "refractive_mask.frag");
+	Shader waterShader("water.vert", "water.frag");
 
 	float vertices[] = {
 		// positions			 // normals					// texture coords
@@ -147,13 +152,19 @@ int main() {
 		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
-	glm::vec3 pointLightPositions[] = {
-		glm::vec3(0.7f,  0.2f,  2.0f),
-		glm::vec3(2.3f, -3.3f, -4.0f),
-		glm::vec3(-4.0f,  2.0f, -12.0f),
-		glm::vec3(0.0f,  0.0f, -3.0f)
-	};
+	//glm::vec3 pointLightPositions[] = {
+	//	glm::vec3(0.7f,  0.2f,  2.0f),
+	//	glm::vec3(2.3f, -3.3f, -4.0f),
+	//	glm::vec3(-4.0f,  2.0f, -12.0f),
+	//	glm::vec3(0.0f,  0.0f, -3.0f)
+	//};
 
+	glm::vec3 pointLightPositions[] = {
+		glm::vec3(16.9275f, 23.8319f, 43.2494f),
+		glm::vec3(-20.9641f, 35.7645f, 10.6067f),
+		glm::vec3(-14.3825f, 25.638f, - 31.6371f),
+		glm::vec3(21.0417f, 13.0547f, 9.31641f)
+	};
 
 	// Screen shader
 	float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
@@ -245,22 +256,25 @@ int main() {
 
 	Model ourDome("resources/dome/dome.obj");
 	//Model ourPirateShip("resources/pirate_ship/pirateship.obj");
-	Model ourPirateShip("resources/pirate_ship/lowpoly.fbx");
+	//Model ourPirateShip("resources/pirate_ship/lowpoly.fbx");
+	Model ourPirateShip("resources/pirate_ship/goodship.obj");
 	//Model ourHitBox("resources/hitbox/hitbox.fbx");
-	Model ourHitBox("resources/hitbox/hitbox.obj");
+	Model ourHitBox("resources/hitbox/lowpolyhitbox2.obj");
 	Model ourBottle("resources/bottle/ship_in_a_bottle_modified4.obj");
 	Model ourSupport("resources/support/support.obj");
 
 	//std::vector<Model> models = { ourPlane2, ourCube };
 	//std::vector<Model> models = { ourPlane2 };
+	//std::vector<Model> models = { ourHitBox };
 	std::vector<Model> models = { ourHitBox };
 
 	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
-	unsigned int _FlowTex1 = loadTexture("resources/plane/Clouds_01_Flow.jpg");
-	//unsigned int _FlowTex1 = loadTexture("resources/plane/flowmap_thumb2.png");
 	unsigned int _CloudTex2 = loadTexture("resources/plane/Clouds_02.jpg");
-	unsigned int _WaveTex = loadTexture("resources/plane/Wave_Dist 1.jpg");
-	unsigned int _ColorTex = loadTexture("resources/plane/UpperColorDesaturate4.jpg");
+	unsigned int _FlowTex1 = loadTexture("resources/plane/Clouds_01_Flow.jpg");
+	unsigned int _WaveTex = loadTexture("resources/plane/Wave_Dist_1.jpg");
+	unsigned int _ColorTex = loadTexture("resources/plane/UpperColor.jpg");
+	unsigned int _ColorWaveTex = loadTexture("resources/plane/Waves_Color.jpg");
+	unsigned int _WaveTex2 = loadTexture("resources/plane/Waves.png");
 
 	cloudsShader.use();
 	cloudsShader.setInt("_CloudTex1", 0);
@@ -370,9 +384,13 @@ int main() {
 	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	//	cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
 
+	setWaterShader(waterShader);
+
 	// render loop
 	while (!glfwWindowShouldClose(window))
 	{
+
+		std::cout << entity->position.x << " " << entity->position.y << " " << entity->position.z << "\n";
 
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 		glEnable(GL_DEPTH_TEST);
@@ -386,9 +404,9 @@ int main() {
 
 		processInput(window);
 
-		entity->update();
+		entity->update(gravity);
 		camera.Position = entity->position;
-		entity->velocity = entity->velocity * .3f;
+		entity->velocity = entity->velocity * .05f;
 
 		// rendering commands here
 		glClearColor(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
@@ -408,12 +426,12 @@ int main() {
 
 		glDepthMask(GL_FALSE);
 
-		// render the plane
+		// render the clouds
 		model = glm::mat4(1.0f);
 		//model = glm::translate(model, glm::vec3(0.0f, 30.0f, 0.0f)); // translate it down so it's at the center of the scene
 		//model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));	// it's a bit too big for our scene, so scale it down
-		model = glm::translate(model, glm::vec3(0.0f, -25.0f, 0.0f)); // translate it down so it's at the center of the scene
-		model = glm::scale(model, glm::vec3(100.0f, 100.0f, 100.0f));	// it's a bit too big for our scene, so scale it down
+		model = glm::translate(model, glm::vec3(0.0f, -125.0f, 0.0f)); // translate it down so it's at the center of the scene
+		model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));	// it's a bit too big for our scene, so scale it down
 
 		cloudsShader.setMat4("model", model);
 
@@ -451,7 +469,7 @@ int main() {
 
 		// directional light
 		lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.25f);
 		//lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
 		lightingShader.setVec3("dirLight.diffuse", 0.5f, 0.6f, 0.5f);
 		lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
@@ -480,6 +498,13 @@ int main() {
 		lightingShader.setFloat("pointLights[2].constant", 1.0f);
 		lightingShader.setFloat("pointLights[2].linear", 0.09);
 		lightingShader.setFloat("pointLights[2].quadratic", 0.032);
+		// Trying to turn off light
+		//lightingShader.setVec3("pointLights[2].ambient", 0.1f, 0.1f, 0.1f);
+		//lightingShader.setVec3("pointLights[2].diffuse", 0.1f, 0.1f, 0.1f);
+		//lightingShader.setVec3("pointLights[2].specular", 0.1f, 0.1f, 0.1f);
+		//lightingShader.setFloat("pointLights[2].constant", 0.1f);
+		//lightingShader.setFloat("pointLights[2].linear", 0.1f);
+		//lightingShader.setFloat("pointLights[2].quadratic", 0.1f);
 		// point light 4
 		lightingShader.setVec3("pointLights[3].position", pointLightPositions[3]);
 		lightingShader.setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
@@ -501,18 +526,36 @@ int main() {
 		lightingShader.setMat4("view", view);
 		lightingShader.setMat4("model", model);
 
-		// render the plane
+		// render the water
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f)); // translate it down so it's at the center of the scene
+		model = glm::translate(model, glm::vec3(0.0f, -10.0f, 0.0f)); // translate it down so it's at the center of the scene
 		model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));	// it's a bit too big for our scene, so scale it down
-		lightingShader.setMat4("model", model);
-		//ourPlane2.Draw2(lightingShader);
+		
+		waterShader.use();
+		waterShader.setMat4("projection", projection);
+		waterShader.setMat4("view", view);
+		waterShader.setVec3("viewPos", camera.Position);
+		waterShader.setMat4("model", model);
+
+		waterShader.setFloat("_Time", glfwGetTime());
+
+		waterShader.setFloat("_Scale", 10000.0f);
+
+		waterShader.setVec4("_Color", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+		waterShader.setVec4("_Color2", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+		
+		bindWaterTextures(waterShader, _CloudTex1, _FlowTex1, _WaveTex2, _WaveTex, _ColorWaveTex);
+
+		ourPlane2.Draw2(waterShader);
+
+		lightingShader.use();
 
 		// render the hitbox
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f)); // translate it down so it's at the center of the scene
 		//model = glm::scale(model, glm::vec3(1.0, 1.0, 1.0));	// it's a bit too big for our scene, so scale it down
-		model = glm::scale(model, glm::vec3(2, 2, 2));	// it's a bit too big for our scene, so scale it down
+		//model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
+		model = glm::scale(model, glm::vec3(200, 200, 200));	// it's a bit too big for our scene, so scale it down
 		//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
 
 		lightingShader.setMat4("model", model);
@@ -550,6 +593,7 @@ int main() {
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f)); // translate it down so it's at the center of the scene
 		//model = glm::scale(model, glm::vec3(1.0, 1.0, 1.0));	// it's a bit too big for our scene, so scale it down
+		//model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
 		model = glm::scale(model, glm::vec3(0.02, 0.02, 0.02));	// it's a bit too big for our scene, so scale it down
 
 		lightingShader.setMat4("model", model);
@@ -581,7 +625,8 @@ int main() {
 			model = glm::translate(model, pointLightPositions[i]);
 			model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
 			lightCubeShader.setMat4("model", model);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			// uncomment to draw point lights
+			//glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
 		create_refraction_map(ourBottle, refractiveMaskShader, bottle_translate, bottle_scale);
@@ -634,6 +679,9 @@ void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		gravity = !gravity;
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -828,4 +876,76 @@ void render_glass(
 
 	// Draw refractive object
 	refractiveObject.Draw2(refractiveShader);
+}
+
+void setWaterShader(Shader& waterShader) {
+	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
+	unsigned int _FlowTex1 = loadTexture("resources/plane/Clouds_01_Flow.jpg");
+	unsigned int _CloudTex2 = loadTexture("resources/plane/Clouds_02.jpg");
+	unsigned int _WaveTex = loadTexture("resources/plane/Wave_Dist_1.jpg");
+	unsigned int _ColorWaveTex = loadTexture("resources/plane/Waves_Color.jpg");
+
+	waterShader.use();
+	waterShader.setInt("_CloudTex1", 0);
+	waterShader.setInt("_FlowTex1", 1);
+	waterShader.setInt("_CloudTex2", 2);
+	waterShader.setInt("_WaveTex", 3);
+	waterShader.setInt("_ColorTex", 4);
+
+	waterShader.setVec4("_Tiling1", glm::vec4(0.1, 0.1, 0, 1));
+	waterShader.setVec4("_Tiling2", glm::vec4(4, 4, 0, 0));
+	waterShader.setVec4("_TilingWave", glm::vec4(0.1, 0.1, 0, 5));
+
+	waterShader.setFloat("_CloudScale", 1.0f);
+	waterShader.setFloat("_CloudBias", 0.0f);
+
+	waterShader.setFloat("_Cloud2Amount", 2.0f);
+	waterShader.setFloat("_WaveAmount", 0.6f);
+	waterShader.setFloat("_WaveDistort", 0.05f);
+	waterShader.setFloat("_FlowSpeed", -3.0f);
+	waterShader.setFloat("_FlowAmount", 1.0f);
+
+	waterShader.setVec4("_TilingColor", glm::vec4(0.05f, 0.05f, 0.0f, 1.0f));
+
+	//waterShader.setVec4("_Color", glm::vec4(0.9495942f, 0.4779412f, 1.0f, 1.0f));
+	//waterShader.setVec4("_Color2", glm::vec4(0.3868124f, 0.3822448f, 0.5147059f, 1.0f));
+
+	waterShader.setVec4("_Color", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+	waterShader.setVec4("_Color2", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+
+	waterShader.setFloat("_CloudDensity", 7.0f);
+
+	waterShader.setFloat("_BumpOffset", 1.0f);
+	waterShader.setFloat("_Steps", 70.0f);
+
+	waterShader.setFloat("_CloudHeight", 500.0f);
+	waterShader.setFloat("_Scale", 0.01f);
+	waterShader.setFloat("_Speed", 0.01f);
+
+	waterShader.setVec4("_LightSpread", glm::vec4(5.0, 10.0, 40.0, 100.0));
+
+	waterShader.setFloat("_ColPow", 5.0f);
+	waterShader.setFloat("_ColFactor", 20.0f);
+}
+
+void bindWaterTextures(Shader& waterShader, unsigned int _CloudTex1, unsigned int _FlowTex1, unsigned int _CloudTex2, unsigned int _WaveTex, unsigned int _ColorTex) {
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(glGetUniformLocation(waterShader.ID, "_CloudTex1"), 0);
+	glBindTexture(GL_TEXTURE_2D, _CloudTex1);
+
+	glActiveTexture(GL_TEXTURE1);
+	glUniform1i(glGetUniformLocation(waterShader.ID, "_FlowTex1"), 1);
+	glBindTexture(GL_TEXTURE_2D, _FlowTex1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glUniform1i(glGetUniformLocation(waterShader.ID, "_CloudTex2"), 2);
+	glBindTexture(GL_TEXTURE_2D, _CloudTex2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glUniform1i(glGetUniformLocation(waterShader.ID, "_WaveTex"), 3);
+	glBindTexture(GL_TEXTURE_2D, _WaveTex);
+
+	glActiveTexture(GL_TEXTURE4);
+	glUniform1i(glGetUniformLocation(waterShader.ID, "_ColorTex"), 4);
+	glBindTexture(GL_TEXTURE_2D, _ColorTex);
 }
