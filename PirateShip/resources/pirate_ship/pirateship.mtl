@@ -1,7 +1,7 @@
-# Blender MTL File: 'None'
-# Material Count: 23
+# Blender MTL File: 'lowpolyhitboxtogether.blend'
+# Material Count: 44
 
-newmtl APS_anchor
+newmtl APS_anchor.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -12,7 +12,18 @@ d 1.000000
 illum 2
 map_Kd APS_anchor_baseColor.jpeg
 
-newmtl APS_cabin
+newmtl APS_anchor.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_anchor_baseColor.jpeg
+
+newmtl APS_cabin.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -23,7 +34,18 @@ d 1.000000
 illum 2
 map_Kd APS_cabin_baseColor.jpeg
 
-newmtl APS_cabin_door
+newmtl APS_cabin.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_cabin_baseColor.jpeg
+
+newmtl APS_cabin_door.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -34,7 +56,18 @@ d 1.000000
 illum 2
 map_Kd APS_cabin_door_baseColor.jpeg
 
-newmtl APS_cannon
+newmtl APS_cabin_door.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_cabin_door_baseColor.jpeg
+
+newmtl APS_cannon.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -45,7 +78,18 @@ d 1.000000
 illum 2
 map_Kd APS_cannon_baseColor.jpeg
 
-newmtl APS_figurehead
+newmtl APS_cannon.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_cannon_baseColor.jpeg
+
+newmtl APS_figurehead.001
 Ns 2.036466
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -56,7 +100,18 @@ d 1.000000
 illum 2
 map_Kd APS_figurehead_baseColor.jpeg
 
-newmtl APS_figurehead_0
+newmtl APS_figurehead.002
+Ns 2.036466
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_figurehead_baseColor.jpeg
+
+newmtl APS_figurehead_0.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -67,7 +122,18 @@ d 1.000000
 illum 2
 map_Kd APS_figurehead_baseColor.jpeg
 
-newmtl APS_front
+newmtl APS_figurehead_0.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_figurehead_baseColor.jpeg
+
+newmtl APS_front.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -78,7 +144,18 @@ d 1.000000
 illum 2
 map_Kd APS_front_baseColor.jpeg
 
-newmtl APS_poopdeck
+newmtl APS_front.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_front_baseColor.jpeg
+
+newmtl APS_poopdeck.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -89,7 +166,18 @@ d 1.000000
 illum 2
 map_Kd APS_poopdeck_baseColor.jpeg
 
-newmtl APS_rope_single
+newmtl APS_poopdeck.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_poopdeck_baseColor.jpeg
+
+newmtl APS_rope_single.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -100,7 +188,7 @@ d 1.000000
 illum 2
 map_Kd APS_rope_single_baseColor.jpeg
 
-newmtl APS_rope_single_0
+newmtl APS_rope_single.002
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -111,7 +199,7 @@ d 1.000000
 illum 2
 map_Kd APS_rope_single_baseColor.jpeg
 
-newmtl APS_rope_single_1
+newmtl APS_rope_single_0.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -122,7 +210,40 @@ d 1.000000
 illum 2
 map_Kd APS_rope_single_baseColor.jpeg
 
-newmtl APS_sails
+newmtl APS_rope_single_0.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_rope_single_baseColor.jpeg
+
+newmtl APS_rope_single_1.001
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_rope_single_baseColor.jpeg
+
+newmtl APS_rope_single_1.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_rope_single_baseColor.jpeg
+
+newmtl APS_sails.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -132,9 +253,19 @@ Ni 1.450000
 d 1.000000
 illum 2
 map_Kd APS_sails_baseColor.png
-map_d APS_sails_baseColor.png
 
-newmtl APS_ship_name
+newmtl APS_sails.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_sails_baseColor.png
+
+newmtl APS_ship_name.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -145,7 +276,18 @@ d 1.000000
 illum 2
 map_Kd APS_ship_name_baseColor.jpeg
 
-newmtl APS_wheel
+newmtl APS_ship_name.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_ship_name_baseColor.jpeg
+
+newmtl APS_wheel.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -156,7 +298,30 @@ d 1.000000
 illum 2
 map_Kd APS_wheel_baseColor.jpeg
 
-newmtl APS_wood_deck
+newmtl APS_wheel.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_wheel_baseColor.jpeg
+
+newmtl APS_wood_deck.001
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_wood_deck_baseColor.jpeg
+map_Ks APS_wood_deck_baseColor_SPEC.png
+
+newmtl APS_wood_deck.002
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -167,7 +332,7 @@ d 1.000000
 illum 2
 map_Kd APS_wood_deck_baseColor.jpeg
 
-newmtl APS_wood_deck_0
+newmtl APS_wood_deck_0.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -178,7 +343,18 @@ d 1.000000
 illum 2
 map_Kd APS_wood_deck_baseColor.jpeg
 
-newmtl APS_wood_hull
+newmtl APS_wood_deck_0.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_wood_deck_baseColor.jpeg
+
+newmtl APS_wood_hull.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -189,7 +365,18 @@ d 1.000000
 illum 2
 map_Kd APS_wood_hull_baseColor.jpeg
 
-newmtl APS_wood_hull_trim
+newmtl APS_wood_hull.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_wood_hull_baseColor.jpeg
+
+newmtl APS_wood_hull_trim.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -200,7 +387,18 @@ d 1.000000
 illum 2
 map_Kd APS_wood_hull_trim_baseColor.jpeg
 
-newmtl APS_wood_tiling
+newmtl APS_wood_hull_trim.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_wood_hull_trim_baseColor.jpeg
+
+newmtl APS_wood_tiling.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -211,7 +409,7 @@ d 1.000000
 illum 2
 map_Kd APS_wood_tiling_baseColor.jpeg
 
-newmtl APS_wood_tiling_0
+newmtl APS_wood_tiling.002
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -222,7 +420,29 @@ d 1.000000
 illum 2
 map_Kd APS_wood_tiling_baseColor.jpeg
 
-newmtl APS_wooden_stuff
+newmtl APS_wood_tiling_0.001
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_wood_tiling_baseColor.jpeg
+
+newmtl APS_wood_tiling_0.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_wood_tiling_baseColor.jpeg
+
+newmtl APS_wooden_stuff.001
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -233,7 +453,29 @@ d 1.000000
 illum 2
 map_Kd APS_wooden_stuff_baseColor.jpeg
 
-newmtl APS_wooden_stuff_0
+newmtl APS_wooden_stuff.002
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_wooden_stuff_baseColor.jpeg
+
+newmtl APS_wooden_stuff_0.001
+Ns 143.999983
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd APS_wooden_stuff_baseColor.jpeg
+
+newmtl APS_wooden_stuff_0.002
 Ns 143.999983
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000

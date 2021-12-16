@@ -16,10 +16,13 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void create_refraction_map(Model& refractiveObject, Shader& refractiveShader, glm::vec3 translate, glm::vec3 scale);
+void create_refraction_mask(Model& refractiveObject, Shader& refractiveShader, glm::vec3 translate, glm::vec3 scale);
+unsigned int loadTexture(const char* path);
+
 void render_glass(
 	Model& refractiveObject,
 	Shader& refractiveShader,
@@ -30,30 +33,37 @@ void render_glass(
 	glm::vec3 translate, 
 	glm::vec3 scale
 );
-void setWaterShader(Shader& waterShader);
-void bindWaterTextures(Shader& waterShader, unsigned int _CloudTex1, unsigned int _FlowTex1, unsigned int _CloudTex2, unsigned int _WaveTex, unsigned int _ColorTex);
-unsigned int loadTexture(const char* path);
 
-// settings
+void setWaterShader(Shader& waterShader);
+void bindWaterTextures(
+	Shader& waterShader,
+	unsigned int _CloudTex1,
+	unsigned int _FlowTex1,
+	unsigned int _CloudTex2,
+	unsigned int _WaveTex,
+	unsigned int _ColorTex
+);
+
+std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> models, CollisionPackage &collisionPackage);
+
+
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
-// camera
+// Camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
+// Frame times
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+// Player
 CharacterEntity* entity;
-
-std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> models, CollisionPackage &collisionPackage);
-
-float deltaTime = 0.0f;	// Time between current frame and last frame
-float lastFrame = 0.0f; // Time of last frame
-
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
 bool gravity = true;
+
 
 int main() {
 	// glfw: initialize and configure
@@ -61,103 +71,35 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	//glfwWindowHint(GLFW_SAMPLES, 4);
-	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	// glfw window creation
 	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-	if (window == NULL)
-	{
+	if (window == NULL) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
+
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	// glad: load all OpenGL function pointers
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
 
-	//glEnable(GL_MULTISAMPLE);
 	// z-buffer
 	glEnable(GL_DEPTH_TEST);
 
-
-	Shader lightingShader("multiple_lights.vert", "multiple_lights.frag");
-	Shader lightCubeShader("light_cube.vert", "light_cube.frag");
-	Shader cloudsShader("clouds.vert", "clouds.frag");
-	Shader refractiveShader("refractive.vert", "refractive.frag");
-	Shader refractiveMaskShader("refractive_mask.vert", "refractive_mask.frag");
-	Shader waterShader("water.vert", "water.frag");
-
-	float vertices[] = {
-		// positions			 // normals					// texture coords
-		-0.5f, -0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,		0.0f,  0.0f,
-		 0.5f, -0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,		1.0f,  0.0f,
-		 0.5f,  0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,		1.0f,  1.0f,
-		 0.5f,  0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,		1.0f,  1.0f,
-		-0.5f,  0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,		0.0f,  1.0f,
-		-0.5f, -0.5f, -0.5f,	 0.0f,  0.0f, -1.0f,		0.0f,  0.0f,
-
-		-0.5f, -0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,		0.0f,  0.0f,
-		 0.5f, -0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,		1.0f,  0.0f,
-		 0.5f,  0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,		1.0f,  1.0f,
-		 0.5f,  0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,		1.0f,  1.0f,
-		-0.5f,  0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,		0.0f,  1.0f,
-		-0.5f, -0.5f,  0.5f,	 0.0f,  0.0f,  1.0f,		0.0f,  0.0f,
-
-		-0.5f,  0.5f,  0.5f,	-1.0f,  0.0f,  0.0f,		1.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f,	-1.0f,  0.0f,  0.0f,		1.0f,  1.0f,
-		-0.5f, -0.5f, -0.5f,	-1.0f,  0.0f,  0.0f,		0.0f,  1.0f,
-		-0.5f, -0.5f, -0.5f,	-1.0f,  0.0f,  0.0f,		0.0f,  1.0f,
-		-0.5f, -0.5f,  0.5f,	-1.0f,  0.0f,  0.0f,		0.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f,	-1.0f,  0.0f,  0.0f,		1.0f,  0.0f,
-
-		 0.5f,  0.5f,  0.5f,	 1.0f,  0.0f,  0.0f,		1.0f,  0.0f,
-		 0.5f,  0.5f, -0.5f,	 1.0f,  0.0f,  0.0f,		1.0f,  1.0f,
-		 0.5f, -0.5f, -0.5f,	 1.0f,  0.0f,  0.0f,		0.0f,  1.0f,
-		 0.5f, -0.5f, -0.5f,	 1.0f,  0.0f,  0.0f,		0.0f,  1.0f,
-		 0.5f, -0.5f,  0.5f,	 1.0f,  0.0f,  0.0f,		0.0f,  0.0f,
-		 0.5f,  0.5f,  0.5f,	 1.0f,  0.0f,  0.0f,		1.0f,  0.0f,
-
-		-0.5f, -0.5f, -0.5f,	 0.0f, -1.0f,  0.0f,		0.0f,  1.0f,
-		 0.5f, -0.5f, -0.5f,	 0.0f, -1.0f,  0.0f,		1.0f,  1.0f,
-		 0.5f, -0.5f,  0.5f,	 0.0f, -1.0f,  0.0f,		1.0f,  0.0f,
-		 0.5f, -0.5f,  0.5f,	 0.0f, -1.0f,  0.0f,		1.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f,	 0.0f, -1.0f,  0.0f,		0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f,	 0.0f, -1.0f,  0.0f,		0.0f,  1.0f,
-
-		-0.5f,  0.5f, -0.5f,	 0.0f,  1.0f,  0.0f,		0.0f,  1.0f,
-		 0.5f,  0.5f, -0.5f,	 0.0f,  1.0f,  0.0f,		1.0f,  1.0f,
-		 0.5f,  0.5f,  0.5f,	 0.0f,  1.0f,  0.0f,		1.0f,  0.0f,
-		 0.5f,  0.5f,  0.5f,	 0.0f,  1.0f,  0.0f,		1.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f,	 0.0f,  1.0f,  0.0f,		0.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f,	 0.0f,  1.0f,  0.0f,		0.0f,  1.0f
-	};
-
-	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
-		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
-	};
-
-	//glm::vec3 pointLightPositions[] = {
-	//	glm::vec3(0.7f,  0.2f,  2.0f),
-	//	glm::vec3(2.3f, -3.3f, -4.0f),
-	//	glm::vec3(-4.0f,  2.0f, -12.0f),
-	//	glm::vec3(0.0f,  0.0f, -3.0f)
-	//};
+	// Load shaders
+	Shader lightingShader("shaders/multiple_lights.vert", "shaders/multiple_lights.frag");
+	Shader lightCubeShader("shaders/light_cube.vert", "shaders/light_cube.frag");
+	Shader cloudsShader("shaders/clouds.vert", "shaders/clouds.frag");
+	Shader waterShader("shaders/water.vert", "shaders/water.frag");
+	Shader refractiveShader("shaders/refractive.vert", "shaders/refractive.frag");
+	Shader refractiveMaskShader("shaders/refractive_mask.vert", "shaders/refractive_mask.frag");
+	Shader screenShader("shaders/framebuffers_screen.vert", "shaders/framebuffers_screen.frag");
 
 	glm::vec3 pointLightPositions[] = {
 		glm::vec3(16.9275f, 23.8319f, 43.2494f),
@@ -166,8 +108,8 @@ int main() {
 		glm::vec3(21.0417f, 13.0547f, 9.31641f)
 	};
 
-	// Screen shader
-	float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+	// Quad that fills the entire screen for the screen shader
+	float quadVertices[] = {
 	// positions   // texCoords
 	-1.0f,  1.0f,  0.0f, 1.0f,
 	-1.0f, -1.0f,  0.0f, 0.0f,
@@ -177,12 +119,8 @@ int main() {
 	 1.0f, -1.0f,  1.0f, 0.0f,
 	 1.0f,  1.0f,  1.0f, 1.0f
 	};
-	
-	Shader screenShader("5.1.framebuffers_screen.vs", "5.1.framebuffers_screen.fs");
-	screenShader.use();
-	screenShader.setInt("screenTexture", 0);
 
-	// screen quad VAO
+	// Screen quad VAO
 	unsigned int quadVAO, quadVBO;
 	glGenVertexArrays(1, &quadVAO);
 	glGenBuffers(1, &quadVBO);
@@ -194,78 +132,30 @@ int main() {
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-	// cube's VAO
-	unsigned int VBO, cubeVAO;
-	glGenVertexArrays(1, &cubeVAO);
-	glGenBuffers(1, &VBO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glBindVertexArray(cubeVAO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
-	// light's VAO
-	// uses same VBO as cube
-	unsigned int lightCubeVAO;
-	glGenVertexArrays(1, &lightCubeVAO);
-	glBindVertexArray(lightCubeVAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// unbind VAO
-	//glBindVertexArray(0);
-
-	// set the texture wrapping/filtering options (on the currently bound texture object)
+	// Set the texture wrapping/filtering options (on the currently bound texture object)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// load and generate the texture
+	// Load and generate the texture
 	int width, height, nrChannels;
 
-	// flip y-axis of image
+	// Flip y-axis of image
 	stbi_set_flip_vertically_on_load(true);
 
-	unsigned int diffuseMap = loadTexture("resources/textures/container2.png");
-	unsigned int specularMap = loadTexture("resources/textures/container2_specular.png");
-
-	lightingShader.use();
-	lightingShader.setInt("material.diffuse", 0);
-	lightingShader.setInt("material.specular", 1);
-
-
-	// hide cursor and capture it
+	// Hide cursor and capture it
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glfwSetCursorPosCallback(window, mouse_callback);
 
-	Model ourModel("resources/models/backpack.obj");
 	Model ourPlane("resources/plane/plane.obj");
-	Model ourPlane2("resources/plane/plane.obj");
 	Model ourCube("resources/cube/cube.obj");
-
-	//std::vector<std::vector<glm::vec3>> triangles = getTriangles(ourCube);
-
 	Model ourDome("resources/dome/dome.obj");
-	//Model ourPirateShip("resources/pirate_ship/pirateship.obj");
-	//Model ourPirateShip("resources/pirate_ship/lowpoly.fbx");
-	Model ourPirateShip("resources/pirate_ship/goodship.obj");
-	//Model ourHitBox("resources/hitbox/hitbox.fbx");
-	Model ourHitBox("resources/hitbox/lowpolyhitbox2.obj");
-	Model ourBottle("resources/bottle/ship_in_a_bottle_modified4.obj");
+	Model ourPirateShip("resources/pirate_ship/pirateship.obj");
+	Model ourHitBox("resources/hitbox/hitbox.obj");
+	Model ourBottle("resources/bottle/bottle.obj");
 	Model ourSupport("resources/support/support.obj");
 
-	//std::vector<Model> models = { ourPlane2, ourCube };
-	//std::vector<Model> models = { ourPlane2 };
-	//std::vector<Model> models = { ourHitBox };
 	std::vector<Model> models = { ourHitBox };
 
 	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
@@ -315,10 +205,10 @@ int main() {
 	cloudsShader.setFloat("_ColPow", 5.0f);
 	cloudsShader.setFloat("_ColFactor", 20.0f);
 
-	// Glass shader
-	unsigned int _normalMap = loadTexture("resources/bottle/bottleexport_baked_material_normal.jpeg");
-	unsigned int _diffuseMap = loadTexture("resources/bottle/bottleexport_baked_material_diffuse.jpg");
-	unsigned int _specularMap = loadTexture("resources/bottle/bottleexport_baked_material_SPEC.png");
+	// Glass shader set up
+	unsigned int _diffuseMap = loadTexture("resources/bottle/bottle_DIFF.jpg");
+	unsigned int _normalMap = loadTexture("resources/bottle/bottle_NORM.jpeg");
+	unsigned int _specularMap = loadTexture("resources/bottle/bottle_SPEC.png");
 
 	refractiveShader.use();
 	refractiveShader.setInt("diffuseMap", 0);
@@ -326,13 +216,10 @@ int main() {
 	refractiveShader.setInt("refractionMap", 2);
 	refractiveShader.setInt("environmentMap", 3);
 	refractiveShader.setInt("specularMap", 4);
-	
-	// size of collision ellipse, experiment with this to change fidelity of detection
-	//static glm::vec3 boundingEllipse = { 0.5f, 1.0f, 0.5f };
 
 	entity = new CharacterEntity();
 
-	// initialize player infront of model
+	// initialize player in front of model
 	entity->position[1] = 7.0f;
 	entity->position[2] = 4.0f;
 
@@ -345,7 +232,6 @@ int main() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
 
 	// framebuffer configuration
-	// -------------------------
 	unsigned int framebuffer;
 	glGenFramebuffers(1, &framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -374,15 +260,6 @@ int main() {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-	//unsigned int rbo2;
-	//glGenRenderbuffers(1, &rbo2);
-	//glBindRenderbuffer(GL_RENDERBUFFER, rbo2);
-	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
-	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo2); // now actually attach it
-	//// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
-	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	//	cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
 
 	setWaterShader(waterShader);
 
@@ -426,12 +303,10 @@ int main() {
 
 		glDepthMask(GL_FALSE);
 
-		// render the clouds
+		// Render the clouds
 		model = glm::mat4(1.0f);
-		//model = glm::translate(model, glm::vec3(0.0f, 30.0f, 0.0f)); // translate it down so it's at the center of the scene
-		//model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));	// it's a bit too big for our scene, so scale it down
-		model = glm::translate(model, glm::vec3(0.0f, -125.0f, 0.0f)); // translate it down so it's at the center of the scene
-		model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));	// it's a bit too big for our scene, so scale it down
+		model = glm::translate(model, glm::vec3(0.0f, -125.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));
 
 		cloudsShader.setMat4("model", model);
 
@@ -470,7 +345,6 @@ int main() {
 		// directional light
 		lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
 		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.25f);
-		//lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
 		lightingShader.setVec3("dirLight.diffuse", 0.5f, 0.6f, 0.5f);
 		lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
@@ -498,13 +372,6 @@ int main() {
 		lightingShader.setFloat("pointLights[2].constant", 1.0f);
 		lightingShader.setFloat("pointLights[2].linear", 0.09);
 		lightingShader.setFloat("pointLights[2].quadratic", 0.032);
-		// Trying to turn off light
-		//lightingShader.setVec3("pointLights[2].ambient", 0.1f, 0.1f, 0.1f);
-		//lightingShader.setVec3("pointLights[2].diffuse", 0.1f, 0.1f, 0.1f);
-		//lightingShader.setVec3("pointLights[2].specular", 0.1f, 0.1f, 0.1f);
-		//lightingShader.setFloat("pointLights[2].constant", 0.1f);
-		//lightingShader.setFloat("pointLights[2].linear", 0.1f);
-		//lightingShader.setFloat("pointLights[2].quadratic", 0.1f);
 		// point light 4
 		lightingShader.setVec3("pointLights[3].position", pointLightPositions[3]);
 		lightingShader.setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
@@ -514,12 +381,6 @@ int main() {
 		lightingShader.setFloat("pointLights[3].linear", 0.09);
 		lightingShader.setFloat("pointLights[3].quadratic", 0.032);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseMap);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularMap);
-
-
 		// pass transformation matrices to the shader
 		model = glm::mat4(1.0f);
 		lightingShader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
@@ -528,8 +389,8 @@ int main() {
 
 		// render the water
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, -10.0f, 0.0f)); // translate it down so it's at the center of the scene
-		model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));	// it's a bit too big for our scene, so scale it down
+		model = glm::translate(model, glm::vec3(0.0f, -10.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));
 		
 		waterShader.use();
 		waterShader.setMat4("projection", projection);
@@ -546,17 +407,14 @@ int main() {
 		
 		bindWaterTextures(waterShader, _CloudTex1, _FlowTex1, _WaveTex2, _WaveTex, _ColorWaveTex);
 
-		ourPlane2.Draw2(waterShader);
+		ourPlane.Draw2(waterShader);
 
 		lightingShader.use();
 
 		// render the hitbox
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f)); // translate it down so it's at the center of the scene
-		//model = glm::scale(model, glm::vec3(1.0, 1.0, 1.0));	// it's a bit too big for our scene, so scale it down
-		//model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
-		model = glm::scale(model, glm::vec3(200, 200, 200));	// it's a bit too big for our scene, so scale it down
-		//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(200, 200, 200));
 
 		lightingShader.setMat4("model", model);
 		//ourHitBox.Draw(lightingShader);
@@ -575,26 +433,10 @@ int main() {
 			entity->triangles[i] = triangle;
 		}
 
-		// render the plane
-		// TESTING: COLLISION
-		//model = glm::mat4(1.0f);
-		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-		//lightingShader.setMat4("model", model);
-		//ourPlane2.Draw2(lightingShader);
-
-		// bind textures on corresponding texture units
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseMap);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularMap);
-
 		// render the ship
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f)); // translate it down so it's at the center of the scene
-		//model = glm::scale(model, glm::vec3(1.0, 1.0, 1.0));	// it's a bit too big for our scene, so scale it down
-		//model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0, 1, 0));
-		model = glm::scale(model, glm::vec3(0.02, 0.02, 0.02));	// it's a bit too big for our scene, so scale it down
+		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.02, 0.02, 0.02));
 
 		lightingShader.setMat4("model", model);
 		ourPirateShip.Draw(lightingShader);
@@ -612,24 +454,7 @@ int main() {
 		lightingShader.setMat4("model", model);
 		ourSupport.Draw(lightingShader);
 
-		// also draw the lamp object(s)
-		lightCubeShader.use();
-		lightCubeShader.setMat4("projection", projection);
-		lightCubeShader.setMat4("view", view);
-
-		// we now draw as many light bulbs as we have point lights.
-		glBindVertexArray(lightCubeVAO);
-		for (unsigned int i = 0; i < 4; i++)
-		{
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, pointLightPositions[i]);
-			model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
-			lightCubeShader.setMat4("model", model);
-			// uncomment to draw point lights
-			//glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
-
-		create_refraction_map(ourBottle, refractiveMaskShader, bottle_translate, bottle_scale);
+		create_refraction_mask(ourBottle, refractiveMaskShader, bottle_translate, bottle_scale);
 
 		// Swap framebuffer textures
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
@@ -638,21 +463,28 @@ int main() {
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		render_glass(ourBottle, refractiveShader, maskBuffer, _diffuseMap, _normalMap, _specularMap, bottle_translate, bottle_scale);
+		render_glass(ourBottle, refractiveShader, maskBuffer, _diffuseMap, 
+					 _normalMap, _specularMap, bottle_translate, bottle_scale);
 
-		// now bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
+		// Bind back to default framebuffer and draw a quad plane with the attached framebuffer color texture
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
-		// clear all relevant buffers
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set clear color to white (not really necessary actually, since we won't be able to see behind the quad anyways)
+		// Disable depth test so screen-space quad isn't discarded due to depth test
+		glDisable(GL_DEPTH_TEST); 
+		// Clear buffers
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		screenShader.use();
 		glBindVertexArray(quadVAO);
-		glBindTexture(GL_TEXTURE_2D, maskBuffer);	// use the color attachment texture as the texture of the quad plane
+
+		// Use the framebuffer color texture as the texture of the quad plane
+		// Draw everything that was rendered before the refractive object
+		glBindTexture(GL_TEXTURE_2D, maskBuffer);	
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		glBindTexture(GL_TEXTURE_2D, colorTexture);	// use the color attachment texture as the texture of the quad plane
+		// Use the framebuffer color texture as the texture of the quad plane
+		// Draw the refractive object
+		glBindTexture(GL_TEXTURE_2D, colorTexture);	
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -660,20 +492,16 @@ int main() {
 		glfwPollEvents();
 	}
 
-	// de-allocate all resources
-	glDeleteVertexArrays(1, &cubeVAO);
-	glDeleteVertexArrays(1, &lightCubeVAO);
-	glDeleteBuffers(1, &VBO);
-
 	glfwTerminate();
-
 	return 0;
 }
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
+
 
 void processInput(GLFWwindow* window)
 {
@@ -693,6 +521,8 @@ void processInput(GLFWwindow* window)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
+
+// Update mouse position and process mouse movement
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (firstMouse)
@@ -703,7 +533,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	}
 
 	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+	float yoffset = lastY - ypos;
 
 	lastX = xpos;
 	lastY = ypos;
@@ -711,8 +541,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
-// utility function for loading a 2D texture from file
-// ---------------------------------------------------
+
+// Utility function for loading a 2D texture from file
 unsigned int loadTexture(char const* path)
 {
 	unsigned int textureID;
@@ -735,20 +565,10 @@ unsigned int loadTexture(char const* path)
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
-		//glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, textureID);
-		//// 4 samples
-		//glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, width, height, GL_TRUE);
-		//glGenerateMipmap(GL_TEXTURE_2D_MULTISAMPLE);
-
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		//glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		stbi_image_free(data);
 	}
@@ -761,19 +581,23 @@ unsigned int loadTexture(char const* path)
 	return textureID;
 }
 
+
+// Convert all the triangles in a mesh into ellipsoid space and put them in an array for collision
 std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> models, CollisionPackage &collisionPackage) {
 	std::vector<std::vector<glm::vec3>> triangles;
 
 	for (Model model : models) {
 		for (Mesh mesh : model.meshes) {
-			for (int i = 0; i < mesh.indices.size(); i += 3) {
-				int index1 = mesh.indices[i];
-				int index2 = mesh.indices[i + 1];
-				int index3 = mesh.indices[i + 2];
+			for (int i = 0; i < mesh.indices.size();) {
+				// Get indices of a triangle's vertices
+				int a = mesh.indices[i++];
+				int b = mesh.indices[i++];
+				int c = mesh.indices[i++];
 
-				glm::vec3 first = mesh.vertices[index1].Position / collisionPackage.eRadius;
-				glm::vec3 second = mesh.vertices[index2].Position / collisionPackage.eRadius;
-				glm::vec3 third = mesh.vertices[index3].Position / collisionPackage.eRadius;
+				// Three coordinates of a triangle in ellipsoid space
+				glm::vec3 first = mesh.vertices[a].Position / collisionPackage.eRadius;
+				glm::vec3 second = mesh.vertices[b].Position / collisionPackage.eRadius;
+				glm::vec3 third = mesh.vertices[c].Position / collisionPackage.eRadius;
 
 				std::vector<glm::vec3> triangle = { first, second, third };
 			
@@ -785,7 +609,10 @@ std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> models, Coll
 	return triangles;
 }
 
-void create_refraction_map(Model& refractiveObject, Shader& refractiveShader, glm::vec3 translate, glm::vec3 scale) {
+
+// Create a mask by rendering the refractive object to the framebuffer's alpha channel
+// Other objects in front will cut away from the mask and won't show up in refraction
+void create_refraction_mask(Model& refractiveObject, Shader& refractiveShader, glm::vec3 translate, glm::vec3 scale) {
 	// Write to the alpha channel
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
 
@@ -795,8 +622,8 @@ void create_refraction_map(Model& refractiveObject, Shader& refractiveShader, gl
 	// Set up shader
 	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 	glm::mat4 view = camera.GetViewMatrix();
-	
 	glm::mat4 model = glm::mat4(1.0f);
+
 	model = glm::translate(model, translate);
 	model = glm::scale(model, scale);
 
@@ -808,9 +635,6 @@ void create_refraction_map(Model& refractiveObject, Shader& refractiveShader, gl
 	// Draw refractive object
 	refractiveObject.Draw2(refractiveShader);
 
-	// Reset alpha values of framebuffer
-	//glClearColor(0, 0, 0, 1);
-
 	// Reset frame buffer write mode
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
@@ -818,6 +642,8 @@ void create_refraction_map(Model& refractiveObject, Shader& refractiveShader, gl
 	glDepthMask(GL_TRUE);
 }
 
+
+// Render a refractive object
 void render_glass(
 	Model& refractiveObject, 
 	Shader& refractiveShader, 
@@ -834,8 +660,8 @@ void render_glass(
 	// Set up shader
 	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 	glm::mat4 view = camera.GetViewMatrix();
-
 	glm::mat4 model = glm::mat4(1.0f);
+
 	model = glm::translate(model, translate);
 	model = glm::scale(model, scale);
 
@@ -843,7 +669,6 @@ void render_glass(
 	refractiveShader.setMat4("projection", projection);
 	refractiveShader.setMat4("view", view);
 	refractiveShader.setMat4("model", model);
-
 	refractiveShader.setVec3("vCameraPos", camera.Position);
 
 	// Set background texture
@@ -851,9 +676,6 @@ void render_glass(
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(glGetUniformLocation(refractiveShader.ID, "refractionMap"), 0);
 	glBindTexture(GL_TEXTURE_2D, maskBuffer);
-
-	// What's around the object
-	// Environment map
 
 	// Set diffuse map
 	glActiveTexture(GL_TEXTURE1);
@@ -870,13 +692,14 @@ void render_glass(
 	glUniform1i(glGetUniformLocation(refractiveShader.ID, "specularMap"), 3);
 	glBindTexture(GL_TEXTURE_2D, specularMap);
 
-	// directional light
+	// Directional light
 	refractiveShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
 	refractiveShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
 
 	// Draw refractive object
 	refractiveObject.Draw2(refractiveShader);
 }
+
 
 void setWaterShader(Shader& waterShader) {
 	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
@@ -907,11 +730,7 @@ void setWaterShader(Shader& waterShader) {
 
 	waterShader.setVec4("_TilingColor", glm::vec4(0.05f, 0.05f, 0.0f, 1.0f));
 
-	//waterShader.setVec4("_Color", glm::vec4(0.9495942f, 0.4779412f, 1.0f, 1.0f));
-	//waterShader.setVec4("_Color2", glm::vec4(0.3868124f, 0.3822448f, 0.5147059f, 1.0f));
-
 	waterShader.setVec4("_Color", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-	waterShader.setVec4("_Color2", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 
 	waterShader.setFloat("_CloudDensity", 7.0f);
 
@@ -927,6 +746,7 @@ void setWaterShader(Shader& waterShader) {
 	waterShader.setFloat("_ColPow", 5.0f);
 	waterShader.setFloat("_ColFactor", 20.0f);
 }
+
 
 void bindWaterTextures(Shader& waterShader, unsigned int _CloudTex1, unsigned int _FlowTex1, unsigned int _CloudTex2, unsigned int _WaveTex, unsigned int _ColorTex) {
 	glActiveTexture(GL_TEXTURE0);

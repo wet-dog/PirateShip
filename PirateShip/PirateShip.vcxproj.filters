@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Shader Files">
+      <UniqueIdentifier>{1d647f07-c770-4183-8f7c-5901a0e03295}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\Downloads\glad\src\glad.c">
@@ -26,62 +29,62 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.vert">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shader.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="multiple_lights.vert">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="multiple_lights.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="light_cube.vert">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="light_cube.frag">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="..\resources\models\backpack.mtl">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="clouds.vert">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\clouds.frag">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="clouds.frag">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\clouds.vert">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="refractive_mask.vert">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\framebuffers.frag">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="refractive_mask.frag">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\framebuffers.vert">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="refractive.vert">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\framebuffers_screen.frag">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="refractive.frag">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\framebuffers_screen.vert">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="5.1.framebuffers.vs">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\light_cube.frag">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="5.1.framebuffers.fs">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\light_cube.vert">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="5.1.framebuffers_screen.vs">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\multiple_lights.frag">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="5.1.framebuffers_screen.fs">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\multiple_lights.vert">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="water.frag">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\refractive.frag">
+      <Filter>Shader Files</Filter>
     </None>
-    <None Include="water.vert">
-      <Filter>Source Files</Filter>
+    <None Include="shaders\refractive.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\refractive_mask.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\refractive_mask.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\shader.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\shader.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\water.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\water.vert">
+      <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

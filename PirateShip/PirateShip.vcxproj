@@ -17,24 +17,24 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\resources\models\backpack.mtl" />
-    <None Include="5.1.framebuffers.fs" />
-    <None Include="5.1.framebuffers.vs" />
-    <None Include="5.1.framebuffers_screen.fs" />
-    <None Include="5.1.framebuffers_screen.vs" />
-    <None Include="clouds.frag" />
-    <None Include="light_cube.frag" />
-    <None Include="light_cube.vert" />
-    <None Include="multiple_lights.frag" />
-    <None Include="multiple_lights.vert" />
-    <None Include="refractive.frag" />
-    <None Include="refractive.vert" />
-    <None Include="refractive_mask.frag" />
-    <None Include="refractive_mask.vert" />
-    <None Include="shader.frag" />
-    <None Include="shader.vert" />
-    <None Include="clouds.vert" />
-    <None Include="water.frag" />
-    <None Include="water.vert" />
+    <None Include="shaders\clouds.frag" />
+    <None Include="shaders\clouds.vert" />
+    <None Include="shaders\framebuffers.frag" />
+    <None Include="shaders\framebuffers.vert" />
+    <None Include="shaders\framebuffers_screen.frag" />
+    <None Include="shaders\framebuffers_screen.vert" />
+    <None Include="shaders\light_cube.frag" />
+    <None Include="shaders\light_cube.vert" />
+    <None Include="shaders\multiple_lights.frag" />
+    <None Include="shaders\multiple_lights.vert" />
+    <None Include="shaders\refractive.frag" />
+    <None Include="shaders\refractive.vert" />
+    <None Include="shaders\refractive_mask.frag" />
+    <None Include="shaders\refractive_mask.vert" />
+    <None Include="shaders\shader.frag" />
+    <None Include="shaders\shader.vert" />
+    <None Include="shaders\water.frag" />
+    <None Include="shaders\water.vert" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\resources\models\ao.jpg" />
