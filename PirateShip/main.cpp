@@ -5,6 +5,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <vector>
+#include <memory>
 
 #include <PirateShip/shader_m.h>
 #include <PirateShip/camera.h>
@@ -12,6 +13,7 @@
 #include <PirateShip/texture.h>
 #include <PirateShip/water_shader.h>
 #include <PirateShip/clouds_shader.h>
+#include <PirateShip/lighting_shader.h>
 
 #include <stb/stb_image.h>
 
@@ -37,7 +39,7 @@ void render_glass(
 	glm::vec3 scale
 );
 
-std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> hitboxes, CollisionPackage &collisionPackage);
+std::vector<std::vector<glm::vec3>> getTriangles(const std::vector<Model>& hitboxes, const CollisionPackage& collisionPackage);
 
 
 const unsigned int SCR_WIDTH = 1920;
@@ -54,7 +56,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // Player
-CharacterEntity* entity;
+std::shared_ptr<CharacterEntity> entity;
 bool gravity = true;
 
 
@@ -96,13 +98,7 @@ int main() {
 
 	CloudsShader cloudsSettings = CloudsShader();
 	WaterShader waterSettings = WaterShader();
-
-	glm::vec3 pointLightPositions[] = {
-		glm::vec3(16.9275f, 23.8319f, 43.2494f),
-		glm::vec3(-20.9641f, 35.7645f, 10.6067f),
-		glm::vec3(-14.3825f, 25.638f, - 31.6371f),
-		glm::vec3(21.0417f, 13.0547f, 9.31641f)
-	};
+	LightingShader lightingSettings = LightingShader();
 
 	// Quad that fills the entire screen for the screen shader
 	float quadVertices[] = {
@@ -155,6 +151,7 @@ int main() {
 
 	std::vector<Model> hitboxes = { ourHitBox };
 
+	// Flow shaders set up
 	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
 	unsigned int _CloudTex2 = loadTexture("resources/plane/Clouds_02.jpg");
 	unsigned int _FlowTex1 = loadTexture("resources/plane/Clouds_01_Flow.jpg");
@@ -162,8 +159,6 @@ int main() {
 	unsigned int _ColorTex = loadTexture("resources/plane/UpperColor.jpg");
 	unsigned int _ColorWaveTex = loadTexture("resources/plane/Waves_Color.jpg");
 	unsigned int _WaveTex2 = loadTexture("resources/plane/Waves.png");
-
-	cloudsSettings.setCloudsShader(cloudsShader);
 
 	// Glass shader set up
 	unsigned int _diffuseMap = loadTexture("resources/bottle/bottle_DIFF.jpg");
@@ -177,15 +172,12 @@ int main() {
 	refractiveShader.setInt("environmentMap", 3);
 	refractiveShader.setInt("specularMap", 4);
 
-	entity = new CharacterEntity();
-
-	// initialize player in front of model
+	// Initialize player
+	entity = std::make_shared<CharacterEntity>();
 	entity->position[1] = 7.0f;
 	entity->position[2] = 4.0f;
-
-	camera.setEntity(entity);
-
 	entity->triangles = getTriangles(hitboxes, *entity->collisionPackage);
+	camera.setEntity(entity);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ZERO);
@@ -237,116 +229,43 @@ int main() {
 
 		processInput(window);
 
+		// Update player and camera
 		entity->update(gravity);
 		camera.Position = entity->position;
 		entity->velocity = entity->velocity * .05f;
 
-		// rendering commands here
+		// Clear buffers
 		glClearColor(25.0f/255.0f, 25.0f/ 255.0f, 112.0f/ 255.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// use camera class to get projection and view matrices
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 
-		// world transformation
-		glm::mat4 model = glm::mat4(1.0f);
+		// Ignore depth buffer when rendering skybox
+		glDepthMask(GL_FALSE);
 
+		// Render clouds
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, -125.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));
+		
 		cloudsShader.use();
 		cloudsShader.setMat4("projection", projection);
 		cloudsShader.setMat4("view", view);
+		cloudsShader.setMat4("model", model);
 		cloudsShader.setVec3("viewPos", camera.Position);
 		cloudsShader.setFloat("_Time", glfwGetTime());
 
-		glDepthMask(GL_FALSE);
-
-		// Render the clouds
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, -125.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(200.0f, 200.0f, 200.0f));
-		cloudsShader.setMat4("model", model);
-
-		glActiveTexture(GL_TEXTURE0);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_CloudTex1"), 0);
-		glBindTexture(GL_TEXTURE_2D, _CloudTex1);
-
-		glActiveTexture(GL_TEXTURE1);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_FlowTex1"), 1);
-		glBindTexture(GL_TEXTURE_2D, _FlowTex1);
-
-		glActiveTexture(GL_TEXTURE2);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_CloudTex2"), 2);
-		glBindTexture(GL_TEXTURE_2D, _CloudTex2);
-
-		glActiveTexture(GL_TEXTURE3);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_WaveTex"), 3);
-		glBindTexture(GL_TEXTURE_2D, _WaveTex);
-
-		glActiveTexture(GL_TEXTURE4);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_ColorTex"), 4);
-		glBindTexture(GL_TEXTURE_2D, _ColorTex);
-
-		//cloudsSettings.setCloudsShader(cloudsShader);
-		//cloudsSettings.bindCloudsTextures(cloudsShader);
-
-		cloudsShader.setFloat("_Time", glfwGetTime());
+		cloudsSettings.setCloudsShader(cloudsShader);
+		cloudsSettings.bindCloudsTextures(cloudsShader, _CloudTex1, _FlowTex1, 
+										  _CloudTex2, _WaveTex, _ColorTex);
 
 		ourDome.Draw2(cloudsShader);
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 		glDepthMask(GL_TRUE);
 
-		// draw objects
-		lightingShader.use();
-		lightingShader.setVec3("viewPos", camera.Position);
-		lightingShader.setFloat("material.shininess", 32.0f);
-
-		// directional light
-		lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.25f);
-		lightingShader.setVec3("dirLight.diffuse", 0.5f, 0.6f, 0.5f);
-		lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-
-		// point light 1
-		lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);
-		lightingShader.setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
-		lightingShader.setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
-		lightingShader.setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
-		lightingShader.setFloat("pointLights[0].constant", 1.0f);
-		lightingShader.setFloat("pointLights[0].linear", 0.09);
-		lightingShader.setFloat("pointLights[0].quadratic", 0.032);
-		// point light 2
-		lightingShader.setVec3("pointLights[1].position", pointLightPositions[1]);
-		lightingShader.setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
-		lightingShader.setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
-		lightingShader.setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
-		lightingShader.setFloat("pointLights[1].constant", 1.0f);
-		lightingShader.setFloat("pointLights[1].linear", 0.09);
-		lightingShader.setFloat("pointLights[1].quadratic", 0.032);
-		// point light 3
-		lightingShader.setVec3("pointLights[2].position", pointLightPositions[2]);
-		lightingShader.setVec3("pointLights[2].ambient", 0.05f, 0.05f, 0.05f);
-		lightingShader.setVec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
-		lightingShader.setVec3("pointLights[2].specular", 1.0f, 1.0f, 1.0f);
-		lightingShader.setFloat("pointLights[2].constant", 1.0f);
-		lightingShader.setFloat("pointLights[2].linear", 0.09);
-		lightingShader.setFloat("pointLights[2].quadratic", 0.032);
-		// point light 4
-		lightingShader.setVec3("pointLights[3].position", pointLightPositions[3]);
-		lightingShader.setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
-		lightingShader.setVec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
-		lightingShader.setVec3("pointLights[3].specular", 1.0f, 1.0f, 1.0f);
-		lightingShader.setFloat("pointLights[3].constant", 1.0f);
-		lightingShader.setFloat("pointLights[3].linear", 0.09);
-		lightingShader.setFloat("pointLights[3].quadratic", 0.032);
-
-		// pass transformation matrices to the shader
-		model = glm::mat4(1.0f);
-		lightingShader.setMat4("projection", projection);
-		lightingShader.setMat4("view", view);
-		lightingShader.setMat4("model", model);
-
-		// render the water
+		// Render water
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, -10.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(10000.0f, 10000.0f, 10000.0f));
@@ -354,31 +273,43 @@ int main() {
 		waterShader.use();
 		waterShader.setMat4("projection", projection);
 		waterShader.setMat4("view", view);
-		waterShader.setVec3("viewPos", camera.Position);
 		waterShader.setMat4("model", model);
-
+		waterShader.setVec3("viewPos", camera.Position);
 		waterShader.setFloat("_Time", glfwGetTime());
 
 		waterSettings.setWaterShader(waterShader);
 		waterSettings.bindWaterTextures(waterShader);
 
-		// Draw water
 		ourPlane.Draw2(waterShader);
 
+		// Render objects with general lighting shader
 		lightingShader.use();
+		lightingSettings.setLightingShader(lightingShader);
 
-		// render the hitbox
+		// Render ship
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.02, 0.02, 0.02));
+		lightingShader.setMat4("projection", projection);
+		lightingShader.setMat4("view", view);
+		lightingShader.setMat4("model", model);
+		lightingShader.setMat4("model", model);
+		lightingShader.setVec3("viewPos", camera.Position);
+
+		ourPirateShip.Draw(lightingShader);
+
+		// Change hitbox size
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(200, 200, 200));
 
-		lightingShader.setMat4("model", model);
+		// Render the hitbox for debugging
+		//lightingShader.setMat4("model", model);
 		//ourHitBox.Draw(lightingShader);
 
+		// Adjust physical hitbox coordinates based on render coordinates
 		entity->triangles = getTriangles(hitboxes, *entity->collisionPackage);
-
-		for (int i = 0; i < entity->triangles.size(); i++) {
-			std::vector<glm::vec3> triangle = entity->triangles[i];
+		for (auto& triangle : entity->triangles) {
 			glm::vec4 first = glm::vec4(triangle[0], 1);
 			glm::vec4 second = glm::vec4(triangle[1], 1);
 			glm::vec4 third = glm::vec4(triangle[2], 1);
@@ -386,22 +317,13 @@ int main() {
 			second = model * second;
 			third = model * third;
 			triangle = { glm::vec3(first), glm::vec3(second), glm::vec3(third) };
-			entity->triangles[i] = triangle;
 		}
-
-		// render the ship
-		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 5.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.02, 0.02, 0.02));
-
-		lightingShader.setMat4("model", model);
-		ourPirateShip.Draw(lightingShader);
 
 		// Bottle scale and translation
 		glm::vec3 bottle_translate = glm::vec3(0.0f, 25.5f, 0.0f);
 		glm::vec3 bottle_scale = glm::vec3(15.0f, 15.0f, 15.0f);
 
-		// render the support
+		// Render wood bottle support
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, -3.95f, 5.0f));
 		model = glm::scale(model, bottle_scale);
@@ -409,6 +331,7 @@ int main() {
 		lightingShader.setMat4("model", model);
 		ourSupport.Draw(lightingShader);
 
+		// Render glass bottle
 		create_refraction_mask(ourBottle, refractiveMaskShader, bottle_translate, bottle_scale);
 
 		// Swap framebuffer textures
@@ -437,7 +360,6 @@ int main() {
 		glBindTexture(GL_TEXTURE_2D, maskBuffer);	
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
-		// Use the framebuffer color texture as the texture of the quad plane
 		// Draw the refractive object
 		glBindTexture(GL_TEXTURE_2D, colorTexture);	
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -498,11 +420,11 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 
 // Convert all the triangles of a hitbox into ellipsoid space and put them in an array for collision
-std::vector<std::vector<glm::vec3>> getTriangles(std::vector<Model> hitboxes, CollisionPackage &collisionPackage) {
+std::vector<std::vector<glm::vec3>> getTriangles(const std::vector<Model>& hitboxes, const CollisionPackage& collisionPackage) {
 	std::vector<std::vector<glm::vec3>> triangles;
 
-	for (Model hitbox : hitboxes) {
-		for (Mesh mesh : hitbox.meshes) {
+	for (const auto& hitbox : hitboxes) {
+		for (const auto& mesh : hitbox.meshes) {
 			for (int i = 0; i < mesh.indices.size();) {
 				// Get indices of a triangle's vertices
 				int a = mesh.indices[i++];

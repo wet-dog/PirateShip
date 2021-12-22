@@ -11,12 +11,13 @@
 #include <PirateShip/collision_package.h>
 
 #include <vector>
+#include <memory>
 
 class Math 
 {
 public:
 	// Assumes: p1,p2 and p3 are given in ellipsoid space:
-	static void checkTriangle(CollisionPackage* colPackage, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3)
+	static void checkTriangle(std::unique_ptr<CollisionPackage>& colPackage, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3)
 	{
 		// Make the plane containing this triangle.
 		Plane trianglePlane(p1, p2, p3);

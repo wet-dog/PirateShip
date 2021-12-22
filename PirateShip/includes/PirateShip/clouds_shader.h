@@ -16,11 +16,11 @@
 class CloudsShader 
 {
 public:
-	unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
-	unsigned int _FlowTex1 = loadTexture("resources/plane/Clouds_01_Flow.jpg");
-	unsigned int _CloudTex2 = loadTexture("resources/plane/Clouds_02.jpg");
-	unsigned int _WaveTex = loadTexture("resources/plane/Wave_Dist691.jpg");
-	unsigned int _ColorTex = loadTexture("resources/plane/UpperColor.jpg");
+	//unsigned int _CloudTex1 = loadTexture("resources/plane/Clouds_01.jpg");
+	//unsigned int _FlowTex1 = loadTexture("resources/plane/Clouds_01_Flow.jpg");
+	//unsigned int _CloudTex2 = loadTexture("resources/plane/Clouds_02.jpg");
+	//unsigned int _WaveTex = loadTexture("resources/plane/Wave_Dist_1.jpg");
+	//unsigned int _ColorTex = loadTexture("resources/plane/UpperColor.jpg");
 
 	void setCloudsShader(Shader& cloudsShader)
 	{
@@ -77,26 +77,36 @@ public:
 		cloudsShader.setFloat("_Steps", 70.0f);
 	}
 
-	void bindCloudsTextures(Shader& cloudsShader)
+	void bindCloudsTextures(Shader& cloudsShader, 
+		const unsigned int _CloudTex1,
+		const unsigned int _FlowTex1,
+		const unsigned int _CloudTex2,
+		const unsigned int _WaveTex,
+		const unsigned int _ColorTex)
 	{
 		glActiveTexture(GL_TEXTURE0);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_CloudTex1"), 0);
+		cloudsShader.setInt("_CloudTex1", 0);
+		//glUniform1i(glGetUniformLocation(cloudsShader.ID, "_CloudTex1"), 0);
 		glBindTexture(GL_TEXTURE_2D, _CloudTex1);
 
 		glActiveTexture(GL_TEXTURE1);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_FlowTex1"), 1);
+		cloudsShader.setInt("_FlowTex1", 1);
+		//glUniform1i(glGetUniformLocation(cloudsShader.ID, "_FlowTex1"), 1);
 		glBindTexture(GL_TEXTURE_2D, _FlowTex1);
 
 		glActiveTexture(GL_TEXTURE2);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_CloudTex2"), 2);
+		cloudsShader.setInt("_CloudTex2", 2);
+		//glUniform1i(glGetUniformLocation(cloudsShader.ID, "_CloudTex2"), 2);
 		glBindTexture(GL_TEXTURE_2D, _CloudTex2);
 
 		glActiveTexture(GL_TEXTURE3);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_WaveTex"), 3);
+		cloudsShader.setInt("_WaveTex", 3);
+		//glUniform1i(glGetUniformLocation(cloudsShader.ID, "_WaveTex"), 3);
 		glBindTexture(GL_TEXTURE_2D, _WaveTex);
 
 		glActiveTexture(GL_TEXTURE4);
-		glUniform1i(glGetUniformLocation(cloudsShader.ID, "_ColorTex"), 4);
+		cloudsShader.setInt("_ColorTex", 4);
+		//glUniform1i(glGetUniformLocation(cloudsShader.ID, "_ColorTex"), 4);
 		glBindTexture(GL_TEXTURE_2D, _ColorTex);
 	}
 };

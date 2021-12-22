@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <vector>
+#include <memory>
 
 #include <PirateShip/plane.h>
 #include <PirateShip/collision_package.h>
@@ -20,11 +21,11 @@ public:
 	glm::vec3 velocity;
 	bool grounded = false;
 	int collisionRecursionDepth;
-	CollisionPackage* collisionPackage;
+	std::unique_ptr<CollisionPackage> collisionPackage;
 	std::vector<std::vector<glm::vec3>> triangles;
 
 	CharacterEntity() {
-		collisionPackage = new CollisionPackage();
+		collisionPackage = std::make_unique<CollisionPackage>();
 		position = glm::vec3(0, 0, 0);
 		velocity = glm::vec3(0, 0, 0);
 		collisionRecursionDepth = 0;

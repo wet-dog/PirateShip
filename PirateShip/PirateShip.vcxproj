@@ -34,6 +34,7 @@
     <ClInclude Include="includes\PirateShip\clouds_shader.h" />
     <ClInclude Include="includes\PirateShip\collision_package.h" />
     <ClInclude Include="includes\PirateShip\entity.h" />
+    <ClInclude Include="includes\PirateShip\lighting_shader.h" />
     <ClInclude Include="includes\PirateShip\math.h" />
     <ClInclude Include="includes\PirateShip\mesh.h" />
     <ClInclude Include="includes\PirateShip\model.h" />

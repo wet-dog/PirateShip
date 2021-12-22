@@ -8,6 +8,7 @@
 #include <PirateShip/entity.h>
 
 #include <vector>
+#include <memory>
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum Camera_Movement {
@@ -44,7 +45,7 @@ public:
     float MouseSensitivity;
     float Zoom;
 
-    CharacterEntity* entity;
+    std::shared_ptr<CharacterEntity> entity;
 
     // constructor with vectors
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
@@ -122,7 +123,7 @@ public:
             Zoom = 45.0f;
     }
 
-    void setEntity(CharacterEntity* e) {
+    void setEntity(std::shared_ptr<CharacterEntity>& e) {
         entity = e;
     }
 

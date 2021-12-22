@@ -35,12 +35,6 @@
     <None Include="shaders\clouds.vert">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\framebuffers.frag">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="shaders\framebuffers.vert">
-      <Filter>Shader Files</Filter>
-    </None>
     <None Include="shaders\light_cube.frag">
       <Filter>Shader Files</Filter>
     </None>
@@ -104,6 +98,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="includes\PirateShip\clouds_shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\PirateShip\lighting_shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
